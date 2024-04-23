@@ -1,5 +1,6 @@
 import torch
-from mmcv.parallel import MMDistributedDataParallel,MMDataParallel
+from mmcv.parallel import MMDistributedDataParallel,MMDataParallel    # del by why
+from mmcv.parallel import MMDistributedDataParallel
 from mmcv.runner import (
     DistSamplerSeedHook,
     EpochBasedRunner,
@@ -12,7 +13,8 @@ from mmcv.runner import (
 from mmdet3d.runner import CustomEpochBasedRunner
 
 from mmdet3d.utils import get_root_logger
-from mmdet.core import DistEvalHook, EvalHook
+from mmdet.core import DistEvalHook, EvalHook  # del by why
+# from mmdet.core import DistEvalHook
 from mmdet.datasets import build_dataloader, build_dataset, replace_ImageToTensor
 
 
@@ -34,7 +36,8 @@ def train_model(
             ds,
             cfg.data.samples_per_gpu,
             cfg.data.workers_per_gpu,
-            num_gpus=1,
+            num_gpus=1,  # del by why
+            # None,
             dist=distributed,
             seed=cfg.seed,
         )
@@ -57,6 +60,15 @@ def train_model(
             model.cuda(),
             device_ids=[0],
         )
+
+# # del by why
+#     model = MMDistributedDataParallel(
+#         model.cuda(),
+#         device_ids=[torch.cuda.current_device()],
+#         broadcast_buffers=False,
+#         find_unused_parameters=find_unused_parameters)
+
+
     # build runner
     optimizer = build_optimizer(model, cfg.optimizer)
 
@@ -100,7 +112,7 @@ def train_model(
         cfg.checkpoint_config,
         cfg.log_config,
         cfg.get("momentum_config", None),
-        custom_hooks_config=cfg.get('custom_hooks', None)
+        custom_hooks_config=cfg.get('custom_hooks', None)     # del by why
     )
     if isinstance(runner, EpochBasedRunner):
         runner.register_hook(DistSamplerSeedHook())
@@ -123,6 +135,7 @@ def train_model(
         eval_cfg = cfg.get("evaluation", {})
         eval_cfg["by_epoch"] = cfg.runner["type"] != "IterBasedRunner"
         eval_hook = DistEvalHook if distributed else EvalHook
+        # eval_hook = DistEvalHook   # del by why
         ###主要是这一步
         runner.register_hook(eval_hook(val_dataloader, **eval_cfg))
 

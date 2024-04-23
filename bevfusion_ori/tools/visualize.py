@@ -10,7 +10,8 @@ from mmcv.parallel import MMDistributedDataParallel
 from mmcv.runner import load_checkpoint
 from torchpack import distributed as dist
 from torchpack.utils.config import configs
-from torchpack.utils.tqdm import tqdm
+# from torchpack.utils.tqdm import tqdm
+from tqdm import tqdm
 
 from mmdet3d.core import LiDARInstance3DBoxes
 from mmdet3d.core.utils import visualize_camera, visualize_lidar, visualize_map
@@ -36,7 +37,7 @@ def recursive_eval(obj, globals=None):
 
 
 def main() -> None:
-    dist.init()
+    # dist.init()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("config", metavar="FILE")

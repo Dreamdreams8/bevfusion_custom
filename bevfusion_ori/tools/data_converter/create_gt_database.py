@@ -252,9 +252,9 @@ def create_groundtruth_database(
     dataset = build_dataset(dataset_cfg)
 
     if database_save_path is None:
-        database_save_path = osp.join(data_path, f"{info_prefix}_gt_database")
+        database_save_path = osp.join(data_path, f"{info_prefix}_gt_database2")
     if db_info_save_path is None:
-        db_info_save_path = osp.join(data_path, f"{info_prefix}_dbinfos_train.pkl")
+        db_info_save_path = osp.join(data_path, f"{info_prefix}_dbinfos_train2.pkl")
     mmcv.mkdir_or_exist(database_save_path)
     all_db_infos = dict()
     if with_mask:
@@ -268,13 +268,20 @@ def create_groundtruth_database(
     group_counter = 0
     for j in track_iter_progress(list(range(len(dataset)))):
         input_dict = dataset.get_data_info(j)
+        # print("input_dict:  ",input_dict)
         dataset.pre_pipeline(input_dict)
         example = dataset.pipeline(input_dict)
         annos = example["ann_info"]
+        # print("annos:  ",annos)
         image_idx = example["sample_idx"]
+        # print("image_idx:  ",image_idx)
         points = example["points"].tensor.numpy()
+        # print("pointsshape:  ",points.shape)
+        # break        
         gt_boxes_3d = annos["gt_bboxes_3d"].tensor.numpy()
+        # print("gt_boxes_3d:  ",gt_boxes_3d)
         names = annos["gt_names"]
+        # print("names:  ",names)
         group_dict = dict()
         if "group_ids" in annos:
             group_ids = annos["group_ids"]
@@ -284,6 +291,7 @@ def create_groundtruth_database(
         if "difficulty" in annos:
             difficulty = annos["difficulty"]
         num_obj = gt_boxes_3d.shape[0]
+        # print("num_obj:  ",num_obj)
         point_indices = box_np_ops.points_in_rbbox(points, gt_boxes_3d)
 
         if with_mask:

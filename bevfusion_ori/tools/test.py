@@ -132,8 +132,10 @@ def main():
         raise ValueError("The output file must be a pkl file.")
 
     configs.load(args.config, recursive=True)
+    # print("args.config:  ",args.config)
     cfg = Config(recursive_eval(configs), filename=args.config)
     # print(cfg)
+
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)

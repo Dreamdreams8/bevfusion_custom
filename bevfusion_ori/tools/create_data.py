@@ -52,7 +52,8 @@ def nuscenes_data_prep(
 
 
 parser = argparse.ArgumentParser(description="Data converter arg parser")
-parser.add_argument("dataset", metavar="kitti", help="name of the dataset")
+parser.add_argument("dataset", metavar="nuscenes", help="name of the dataset")   # change by why
+# parser.add_argument("dataset", metavar="kitti", help="name of the dataset")   
 parser.add_argument(
     "--root-path",
     type=str,

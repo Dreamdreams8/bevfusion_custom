@@ -276,7 +276,7 @@ class NuScenesDataset(Custom3DDataset):
 
                 # camera to lidar transform
                 camera2lidar = np.eye(4).astype(np.float32)
-                camera2lidar[:3, :3] = camera_info["camera_extrinsic_r"]
+                # camera2lidar[:3, :3] = camera_info["camera_extrinsic_r"]   # del by why
                 camera2lidar[:3, 3] = camera_info["sensor2lidar_translation"]
                 data["camera2lidar"].append(camera2lidar)
 

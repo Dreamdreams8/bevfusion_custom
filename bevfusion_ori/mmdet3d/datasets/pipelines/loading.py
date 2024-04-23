@@ -183,8 +183,12 @@ class LoadPointsFromMultiSweeps:
                     cloud arrays.
         """
         points = results["points"]
+        # print("pointsshape++++++++++:  ",points.shape)
         points = points[:, self.use_dim]
+        # points = points[:, [0,1,2,4]]
+        # print("self.use_dim++++++++++:  ",self.use_dim)
         points.tensor[:, 4] = 0
+        # print("pointsshape22++++++++++:  ",points.shape)
         sweep_points_list = [points]
         ts = results["timestamp"] / 1e6
         if self.pad_empty_sweeps and len(results["sweeps"]) == 0:
