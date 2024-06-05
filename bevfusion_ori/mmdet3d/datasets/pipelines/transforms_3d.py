@@ -49,8 +49,8 @@ class GTDepth:
         points = data['points'].data 
         img = data['img'].data
 
-        if self.keyframe_only:
-            points = points[points[:, 4] == 0]
+        # if self.keyframe_only:
+        #     points = points[points[:, 4] == 0]
 
         batch_size = len(points)
         depth = torch.zeros(img.shape[0], *img.shape[-2:]) #.to(points[0].device)
@@ -164,6 +164,7 @@ class ImageAug3D:
         return img, rotation, translation
 
     def __call__(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        # print("data: ",data)
         imgs = data["img"]
         new_imgs = []
         transforms = []

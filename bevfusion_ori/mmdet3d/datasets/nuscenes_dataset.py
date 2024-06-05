@@ -13,7 +13,7 @@ from mmdet.datasets import DATASETS
 
 from ..core.bbox import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
-
+from ..evaluate.map import calculate_map
 
 @DATASETS.register_module()
 class NuScenesDataset(Custom3DDataset):
@@ -112,14 +112,14 @@ class NuScenesDataset(Custom3DDataset):
     CLASSES = (
         "car",
         "truck",
-        "trailer",
-        "bus",
-        "construction_vehicle",
-        "bicycle",
-        "motorcycle",
-        "pedestrian",
-        "traffic_cone",
-        "barrier",
+        # "trailer",
+        # "bus",
+        # "construction_vehicle",
+        # "bicycle",
+        # "motorcycle",
+        # "pedestrian",
+        # "traffic_cone",
+        # "barrier",
     )
 
     def __init__(
@@ -130,7 +130,7 @@ class NuScenesDataset(Custom3DDataset):
         object_classes=None,
         map_classes=None,
         load_interval=1,
-        with_velocity=True,
+        with_velocity=False,
         modality=None,
         box_type_3d="LiDAR",
         filter_empty_gt=True,
@@ -159,7 +159,7 @@ class NuScenesDataset(Custom3DDataset):
         self.eval_detection_configs = config_factory(self.eval_version)
         if self.modality is None:
             self.modality = dict(
-                use_camera=False,
+                use_camera=True,
                 use_lidar=True,
                 use_radar=False,
                 use_map=False,
@@ -178,11 +178,12 @@ class NuScenesDataset(Custom3DDataset):
                 otherwise, store empty list.
         """
         info = self.data_infos[idx]
-        if self.use_valid_flag:
-            mask = info["valid_flag"]
-            gt_names = set(info["gt_names"][mask])
-        else:
-            gt_names = set(info["gt_names"])
+        gt_names = set(info["gt_names"])
+        # if self.use_valid_flag:
+        #     mask = info["valid_flag"]
+        #     gt_names = set(info["gt_names"][mask])
+        # else:
+        #     gt_names = set(info["gt_names"])
 
         cat_ids = []
         for name in gt_names:
@@ -208,34 +209,22 @@ class NuScenesDataset(Custom3DDataset):
 
     def get_data_info(self, index: int) -> Dict[str, Any]:
         info = self.data_infos[index]
-
+        # print(info)
         data = dict(
-            token=info["token"],
-            sample_idx=info['token'],
             lidar_path=info["lidar_path"],
-            sweeps=info["sweeps"],
             timestamp=info["timestamp"],
-            location=info.get('location', None), 
-            radar=info.get('radars', None), 
         )
-
-        if data['location'] is None:
-            data.pop('location')
-        if data['radar'] is None:
-            data.pop('radar')
-
-        # ego to global transform
-        ego2global = np.eye(4).astype(np.float32)
-        ego2global[:3, :3] = Quaternion(info["ego2global_rotation"]).rotation_matrix
-        ego2global[:3, 3] = info["ego2global_translation"]
-        data["ego2global"] = ego2global
-
+        data["sample_idx"] = index
         # lidar to ego transform
         lidar2ego = np.eye(4).astype(np.float32)
-        lidar2ego[:3, :3] = Quaternion(info["lidar2ego_rotation"]).rotation_matrix
+        # print("lidar2ego_rotation",  info["lidar2ego_rotation"])
+        # print("lidar2ego_translation",  info["lidar2ego_translation"])
+        # print("lidar2ego",  lidar2ego[:3, 3])
+        lidar2ego[:3, :3] = info["lidar2ego_rotation"]
         lidar2ego[:3, 3] = info["lidar2ego_translation"]
         data["lidar2ego"] = lidar2ego
-
+        # print("use_camera+++++++++++",self.modality["use_camera"])
+        self.modality["use_camera"] = True  # 单激光时也默认打开 # add by why
         if self.modality["use_camera"]:
             data["image_paths"] = []
             data["lidar2camera"] = []
@@ -243,11 +232,12 @@ class NuScenesDataset(Custom3DDataset):
             data["camera2ego"] = []
             data["camera_intrinsics"] = []
             data["camera2lidar"] = []
-
             for _, camera_info in info["cams"].items():
+                # print("camera_info:  ",camera_info["data_path"])
                 data["image_paths"].append(camera_info["data_path"])
 
                 # lidar to camera transform
+                # print("sensor2lidar_rotation",camera_info["sensor2lidar_rotation"])
                 lidar2camera_r = np.linalg.inv(camera_info["sensor2lidar_rotation"])
                 lidar2camera_t = (
                     camera_info["sensor2lidar_translation"] @ lidar2camera_r.T
@@ -282,6 +272,7 @@ class NuScenesDataset(Custom3DDataset):
 
         annos = self.get_ann_info(index)
         data["ann_info"] = annos
+        # print("+++++++++++-_______----------data:  ",data)
         return data
 
     def get_ann_info(self, index):
@@ -299,13 +290,9 @@ class NuScenesDataset(Custom3DDataset):
                 - gt_names (list[str]): Class names of ground truths.
         """
         info = self.data_infos[index]
-        # filter out bbox containing no points
-        if self.use_valid_flag:
-            mask = info["valid_flag"]
-        else:
-            mask = info["num_lidar_pts"] > 0
-        gt_bboxes_3d = info["gt_boxes"][mask]
-        gt_names_3d = info["gt_names"][mask]
+
+        gt_bboxes_3d = info["gt_boxes"]
+        gt_names_3d = info["gt_names"]
         gt_labels_3d = []
         for cat in gt_names_3d:
             if cat in self.CLASSES:
@@ -313,12 +300,13 @@ class NuScenesDataset(Custom3DDataset):
             else:
                 gt_labels_3d.append(-1)
         gt_labels_3d = np.array(gt_labels_3d)
+        # print("gt_labels_3d:  ",gt_labels_3d)
 
-        if self.with_velocity:
-            gt_velocity = info["gt_velocity"][mask]
-            nan_mask = np.isnan(gt_velocity[:, 0])
-            gt_velocity[nan_mask] = [0.0, 0.0]
-            gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
+        # if self.with_velocity:
+        #     gt_velocity = info["gt_velocity"][mask]
+        #     nan_mask = np.isnan(gt_velocity[:, 0])
+        #     gt_velocity[nan_mask] = [0.0, 0.0]
+        #     gt_bboxes_3d = np.concatenate([gt_bboxes_3d, gt_velocity], axis=-1)
 
         # the nuscenes box center is [0.5, 0.5, 0.5], we change it to be
         # the same as KITTI (0.5, 0.5, 0)
@@ -431,6 +419,9 @@ class NuScenesDataset(Custom3DDataset):
         from nuscenes.eval.detection.evaluate import DetectionEval
 
         output_dir = osp.join(*osp.split(result_path)[:-1])
+        print("*osp.split(result_path)[:-1]:    ",*osp.split(result_path)[:-1])
+        print("result_path:   ",result_path)
+        print("self.dataset_root++++++++++++++++:    ",self.dataset_root)
         nusc = NuScenes(version=self.version, dataroot=self.dataset_root, verbose=False)
         eval_set_map = {
             "v1.0-mini": "mini_val",
@@ -528,49 +519,93 @@ class NuScenesDataset(Custom3DDataset):
                 metrics[f"map/{name}/iou@{threshold.item():.2f}"] = iou.item()
         metrics["map/mean/iou@max"] = ious.max(dim=1).values.mean().item()
         return metrics
+# del by why
+    # def evaluate(
+    #     self,
+    #     results,
+    #     metric="bbox",
+    #     jsonfile_prefix=None,
+    #     result_names=["pts_bbox"],
+    #     **kwargs,
+    # ):
+    #     """Evaluation in nuScenes protocol.
 
+    #     Args:
+    #         results (list[dict]): Testing results of the dataset.
+    #         metric (str | list[str]): Metrics to be evaluated.
+    #         jsonfile_prefix (str | None): The prefix of json files. It includes
+    #             the file path and the prefix of filename, e.g., "a/b/prefix".
+    #             If not specified, a temp file will be created. Default: None.
+
+    #     Returns:
+    #         dict[str, float]: Results of each evaluation metric.
+    #     """
+
+    #     metrics = {}
+
+    #     if "masks_bev" in results[0]:
+    #         metrics.update(self.evaluate_map(results))
+
+    #     if "boxes_3d" in results[0]:
+    #         result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+
+    #         if isinstance(result_files, dict):
+    #             for name in result_names:
+    #                 print("Evaluating bboxes of {}".format(name))
+    #                 ret_dict = self._evaluate_single(result_files[name])
+    #             metrics.update(ret_dict)
+    #         elif isinstance(result_files, str):
+    #             metrics.update(self._evaluate_single(result_files))
+
+    #         if tmp_dir is not None:
+    #             tmp_dir.cleanup()
+
+    #     return metrics
+# add why
     def evaluate(
         self,
         results,
         metric="bbox",
-        jsonfile_prefix=None,
-        result_names=["pts_bbox"],
-        **kwargs,
+        **kwargs
     ):
-        """Evaluation in nuScenes protocol.
+        metrics_dict = self.calc_metrics(results)  # 计算评价指标
+        tmp_dir = tempfile.TemporaryDirectory()
+        tmp_json = osp.join(tmp_dir.name, "metrics_summary.json")
+        mmcv.dump(metrics_dict, tmp_json)
 
-        Args:
-            results (list[dict]): Testing results of the dataset.
-            metric (str | list[str]): Metrics to be evaluated.
-            jsonfile_prefix (str | None): The prefix of json files. It includes
-                the file path and the prefix of filename, e.g., "a/b/prefix".
-                If not specified, a temp file will be created. Default: None.
+        # self.metric_table(tmp_json)  # 表格形式输出评价指标
+        # self.metric_dict(tmp_json)  # 字典形式输出评价指标
 
-        Returns:
-            dict[str, float]: Results of each evaluation metric.
-        """
+        tmp_dir.cleanup()
+        return metrics_dict
 
-        metrics = {}
+    def calc_metrics(self, results, score_thr=0.5):
+        #  results[0]: dict_keys(['boxes_3d', 'scores_3d', 'labels_3d'])
+        mAP_list = []  # 存放每一帧的 mAP
+        for frame_i, (frame_gt, frame_pred) in enumerate(zip(self.data_infos, results)):
+            gt_boxes_list = [[(0, 0, 0, 0, 0, 0, 0)] for i in range(len(self.CLASSES))]
+            pred_boxes_list = [[(0, 0, 0, 0, 0, 0, 0)] for i in range(len(self.CLASSES))]
+            for gt_box, gt_label in zip(frame_gt['gt_boxes'], frame_gt['gt_names']):
+                if str(gt_label) != 'masked_area':  # 过滤掉对象车道蒙板
+                    gt_label_idx = self.CLASSES.index(str(gt_label))
+                    gt_boxes_list[gt_label_idx].append(gt_box)
 
-        if "masks_bev" in results[0]:
-            metrics.update(self.evaluate_map(results))
+            for pred_box, pred_score, pred_label_idx in zip(frame_pred['boxes_3d'], frame_pred['scores_3d'], frame_pred['labels_3d']):
+                if pred_score >= score_thr:
+                    pred_boxes_list[int(pred_label_idx)].append(pred_box)
 
-        if "boxes_3d" in results[0]:
-            result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+            # 计算单帧 mAP
+            mAP = calculate_map(gt_boxes_list, pred_boxes_list, iou_threshold=0.5)
+            print("frame_{} mAP is {}:".format(frame_i, mAP))
+            mAP_list.append(mAP)
 
-            if isinstance(result_files, dict):
-                for name in result_names:
-                    print("Evaluating bboxes of {}".format(name))
-                    ret_dict = self._evaluate_single(result_files[name])
-                metrics.update(ret_dict)
-            elif isinstance(result_files, str):
-                metrics.update(self._evaluate_single(result_files))
+        mAP_list_filter_0 = list(filter(lambda x: x != 0, mAP_list))  # 去掉 0
+        mAP = np.mean(mAP_list_filter_0)
+        metrics_summary = {
+            'mAP': mAP,
+        }
 
-            if tmp_dir is not None:
-                tmp_dir.cleanup()
-
-        return metrics
-
+        return metrics_summary
 
 def output_to_nusc_box(detection):
     """Convert the output to the box class in the nuScenes.
@@ -637,8 +672,9 @@ def lidar_nusc_box_to_global(
     box_list = []
     for box in boxes:
         # Move box to ego vehicle coord system
-        box.rotate(pyquaternion.Quaternion(info["lidar2ego_rotation"]))
-        box.translate(np.array(info["lidar2ego_translation"]))
+        # del by why 本身已经是车身坐标系，所以不需要转车身坐标系
+        # box.rotate(pyquaternion.Quaternion(info["lidar2ego_rotation"]))
+        # box.translate(np.array(info["lidar2ego_translation"]))
 
         # filter det in ego.
         cls_range_map = eval_configs.class_range
@@ -647,7 +683,8 @@ def lidar_nusc_box_to_global(
         if radius > det_range:
             continue
         # Move box to global coord system
-        box.rotate(pyquaternion.Quaternion(info["ego2global_rotation"]))
-        box.translate(np.array(info["ego2global_translation"]))
+        # del by why 本身已经是车身坐标系，所以不需要转车身坐标系
+        # box.rotate(pyquaternion.Quaternion(info["ego2global_rotation"]))
+        # box.translate(np.array(info["ego2global_translation"]))
         box_list.append(box)
     return box_list

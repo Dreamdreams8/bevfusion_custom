@@ -180,6 +180,7 @@ class Collect3D:
                 - ``metas``
         """
         data = {}
+        # print("self.keys:  ", self.keys)
         for key in self.keys:
             if key not in self.meta_keys:
                 data[key] = results[key]

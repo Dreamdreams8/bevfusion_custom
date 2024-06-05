@@ -20,6 +20,7 @@ class CBGSDataset:
         self.CLASSES = dataset.CLASSES
         self.cat2id = {name: i for i, name in enumerate(self.CLASSES)}
         self.sample_indices = self._get_sample_indices()
+        # print("++++++++++++++++sample_indices   ",self.sample_indices)
         # self.dataset.data_infos = self.data_infos
         if hasattr(self.dataset, "flag"):
             self.flag = np.array(

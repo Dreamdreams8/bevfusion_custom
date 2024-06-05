@@ -1,9 +1,9 @@
 dataset_type: NuScenesDataset
-dataset_root: data/nuscenes/
+dataset_root: data/custom/
 gt_paste_stop_epoch: -1
 reduce_beams: 32
-load_dim: 5       # change by why
-use_dim: 5
+load_dim: 4       # change by why
+use_dim: 4
 load_augmented: null
 
 point_cloud_range: [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
@@ -25,14 +25,14 @@ augment3d:
 object_classes:
   - car
   - truck
-  - construction_vehicle
-  - bus
-  - trailer
-  - barrier
-  - motorcycle
-  - bicycle
-  - pedestrian
-  - traffic_cone
+  # - construction_vehicle
+  # - bus
+  # - trailer
+  # - barrier
+  # - motorcycle
+  # - bicycle
+  # - pedestrian
+  # - traffic_cone
 
 map_classes:
   - drivable_area
@@ -47,7 +47,7 @@ map_classes:
 
 input_modality:
   use_lidar: true
-  use_camera: true
+  use_camera: false
   use_radar: false
   use_map: false
   use_external: false
@@ -82,7 +82,7 @@ train_pipeline:
     stop_epoch: ${gt_paste_stop_epoch}
     db_sampler:
       dataset_root: ${dataset_root}
-      info_path: ${dataset_root + "nuscenes_dbinfos_train.pkl"}
+      info_path: ${dataset_root + "custom_dbinfos_train.pkl"}
       rate: 1.0
       prepare: 
         filter_by_difficulty: [-1]
@@ -199,15 +199,15 @@ test_pipeline:
     reduce_beams: ${reduce_beams}
     load_augmented: ${load_augmented}
   -
-    type: LoadPointsFromMultiSweeps
-    sweeps_num: 9
-    load_dim: ${load_dim}
-    use_dim: ${use_dim}
-    reduce_beams: ${reduce_beams}
-    pad_empty_sweeps: true
-    remove_close: true
-    load_augmented: ${load_augmented}
-  -
+  #   type: LoadPointsFromMultiSweeps
+  #   sweeps_num: 9
+  #   load_dim: ${load_dim}
+  #   use_dim: ${use_dim}
+  #   reduce_beams: ${reduce_beams}
+  #   pad_empty_sweeps: true
+  #   remove_close: true
+  #   load_augmented: ${load_augmented}
+  # -
     type: LoadAnnotations3D
     with_bbox_3d: true
     with_label_3d: true
@@ -268,10 +268,11 @@ data:
   workers_per_gpu: 4
   train:
     type: CBGSDataset
+    # type: CustomDataset    
     dataset:
       type: ${dataset_type}
       dataset_root: ${dataset_root}
-      ann_file: ${dataset_root + "nuscenes_infos_train.pkl"}
+      ann_file: ${dataset_root + "custom_infos_train.pkl"}
       pipeline: ${train_pipeline}
       object_classes: ${object_classes}
       map_classes: ${map_classes}
@@ -282,7 +283,7 @@ data:
   val:
     type: ${dataset_type}
     dataset_root: ${dataset_root}
-    ann_file: ${dataset_root + "nuscenes_infos_val.pkl"}
+    ann_file: ${dataset_root + "custom_infos_val.pkl"}
     pipeline: ${test_pipeline}
     object_classes: ${object_classes}
     map_classes: ${map_classes}
@@ -292,7 +293,7 @@ data:
   test:
     type: ${dataset_type}
     dataset_root: ${dataset_root}
-    ann_file: ${dataset_root + "nuscenes_infos_val.pkl"}
+    ann_file: ${dataset_root + "custom_infos_val.pkl"}
     pipeline: ${test_pipeline}
     object_classes: ${object_classes}
     map_classes: ${map_classes}

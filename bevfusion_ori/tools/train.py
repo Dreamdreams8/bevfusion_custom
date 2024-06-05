@@ -72,6 +72,7 @@ def main():
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
 
+    print("cfg.data.train:    ",cfg.data.train) 
     datasets = [build_dataset(cfg.data.train)]
 
     model = build_model(cfg.model,)
@@ -82,6 +83,8 @@ def main():
         model = convert_sync_batchnorm(model, exclude=cfg["sync_bn"]["exclude"])
 
     logger.info(f"Model:\n{model}")
+    torch.save(model.state_dict(), './model_weights.pth')
+
     train_model(
         model,
         datasets,

@@ -82,6 +82,7 @@ class BEVFusion(Base3DFusionModel):
         self.heads = nn.ModuleDict()
         for name in heads:
             if heads[name] is not None:
+                # print("name+++++++++:  ",heads[name])
                 self.heads[name] = build_head(heads[name])
 
         if "loss_scale" in kwargs:

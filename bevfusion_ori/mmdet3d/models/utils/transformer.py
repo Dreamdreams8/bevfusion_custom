@@ -95,7 +95,8 @@ class TransformerDecoderLayer(nn.Module):
             query2 = self.self_attn(q, k, value=v)[0]
             query = query + self.dropout1(query2)
             query = self.norm1(query)
-
+        # print("key_pos_embed+++++++++++++",key_pos.shape)
+        # print("query_pos+++++++++++++",query_pos.shape)
         query2 = self.multihead_attn(query=self.with_pos_embed(query, query_pos_embed),
                                      key=self.with_pos_embed(key, key_pos_embed),
                                      value=self.with_pos_embed(key, key_pos_embed), attn_mask=attn_mask)[0]

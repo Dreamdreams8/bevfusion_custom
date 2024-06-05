@@ -6,9 +6,9 @@ model:
       auxiliary: true
       in_channels: null
       hidden_channel: 128
-      num_classes: 10
+      num_classes: 2    # change by why  10
       num_decoder_layers: 1
-      num_heads: 8
+      num_heads: 8    # change by why 8
       nms_kernel_size: 3
       ffn_channel: 256
       dropout: 0.1
@@ -52,7 +52,7 @@ model:
         height: [1, 2]
         dim: [3, 2]
         rot: [2, 2]
-        vel: [2, 2]
+        vel: [2, 2]   #del by why
       bbox_coder:
         type: TransFusionBBoxCoder
         pc_range: ${point_cloud_range[:2]}

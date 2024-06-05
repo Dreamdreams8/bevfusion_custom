@@ -52,6 +52,7 @@ class LoadMultiViewImageFromFiles:
                 - scale_factor (float): Scale factor.
                 - img_norm_cfg (dict): Normalization configuration of images.
         """
+        # print("image_paths:  ",results)
         filename = results["image_paths"]
         # img is of shape (h, w, c, num_views)
         # modified for waymo
@@ -61,12 +62,15 @@ class LoadMultiViewImageFromFiles:
             images.append(Image.open(name))
         
         #TODO: consider image padding in waymo
+        
 
         results["filename"] = filename
         # unravel to list, see `DefaultFormatBundle` in formating.py
         # which will transpose each image separately and then stack into array
         results["img"] = images
         # [1600, 900]
+        # if len(images) < 1:
+        #     return results        
         results["img_shape"] = images[0].size
         results["ori_shape"] = images[0].size
         # Set initial values for default meta_keys
@@ -187,8 +191,8 @@ class LoadPointsFromMultiSweeps:
         points = points[:, self.use_dim]
         # points = points[:, [0,1,2,4]]
         # print("self.use_dim++++++++++:  ",self.use_dim)
-        points.tensor[:, 4] = 0
-        # print("pointsshape22++++++++++:  ",points.shape)
+        # points.tensor[:, 4] = 0
+        print("pointsshape22++++++++++:  ",points.shape)
         sweep_points_list = [points]
         ts = results["timestamp"] / 1e6
         if self.pad_empty_sweeps and len(results["sweeps"]) == 0:
@@ -400,11 +404,11 @@ class LoadPointsFromFile:
         """
         lidar_path = results["lidar_path"]
         points = self._load_points(lidar_path)
-        points = points.reshape(-1, self.load_dim)
-        # TODO: make it more general
-        if self.reduce_beams and self.reduce_beams < 32:
-            points = reduce_LiDAR_beams(points, self.reduce_beams)
-        points = points[:, self.use_dim]
+        # print("self.load_dim:   ",self.load_dim)
+        # print("points:  ",points.shape)
+        points = points.reshape(-1, 4)
+
+        # points = points[:, self.use_dim]
         attribute_dims = None
 
         if self.shift_height:

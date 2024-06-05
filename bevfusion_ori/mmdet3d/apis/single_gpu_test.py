@@ -234,8 +234,8 @@ def main():
             
             input_data_files, tmp_dir = dataset.format_results(input_data, **kwargs)
             # eval_kwargs.updata(dict())
-            
-            print(dataset.evaluate(outputs,input_data_files = input_data_files, **eval_kwargs))
+            # del by why
+            # print(dataset.evaluate(outputs,input_data_files = input_data_files, **eval_kwargs))
             # print(dataset.evaluate(outputs,**eval_kwargs))
             tmp_dir.cleanup()
 

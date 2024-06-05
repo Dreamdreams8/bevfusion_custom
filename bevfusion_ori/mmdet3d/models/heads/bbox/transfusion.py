@@ -165,6 +165,9 @@ class TransFusionHead(nn.Module):
         # Position Embedding for Cross-Attention, which is re-used during training
         x_size = self.test_cfg["grid_size"][0] // self.test_cfg["out_size_factor"]
         y_size = self.test_cfg["grid_size"][1] // self.test_cfg["out_size_factor"]
+        # print("grid_size+++++++",self.test_cfg["grid_size"])
+        # print("out_size_factor+++++++",self.test_cfg["out_size_factor"])
+        # print("x_size, y_size:   ",x_size, "     ",y_size)
         self.bev_pos = self.create_2D_grid(x_size, y_size)
 
         self.img_feat_pos = None
@@ -222,15 +225,21 @@ class TransFusionHead(nn.Module):
         """
         batch_size = inputs.shape[0]
         lidar_feat = self.shared_conv(inputs)
-
+        # print("inputs+++++++++++++",inputs.shape)
+        # print("lidar_feat+++++++++++++",lidar_feat.shape)
+        # print("inputs+++++++++++++",inputs.shape)
         #################################
         # image to BEV
         #################################
         lidar_feat_flatten = lidar_feat.view(
             batch_size, lidar_feat.shape[1], -1
         )  # [BS, C, H*W]
+        # print("lidar_feat_flatten+++++++++++++",lidar_feat_flatten.shape)
+        # print("bev_pos0000+++++++++++++",self.bev_pos.shape)
         bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(lidar_feat.device)
-
+        # print("lidar_feat+++++++++++++",lidar_feat.shape)
+        # print("batch_size+++++++++++++",batch_size)
+        # print("bev_pos+++++++++++++",bev_pos.shape)
         #################################
         # image guided query initialization
         #################################
@@ -244,25 +253,16 @@ class TransFusionHead(nn.Module):
             heatmap, kernel_size=self.nms_kernel_size, stride=1, padding=0
         )
         local_max[:, :, padding:(-padding), padding:(-padding)] = local_max_inner
-        ## for Pedestrian & Traffic_cone in nuScenes
-        if self.test_cfg["dataset"] == "nuScenes":
-            local_max[
-                :,
-                8,
-            ] = F.max_pool2d(heatmap[:, 8], kernel_size=1, stride=1, padding=0)
-            local_max[
-                :,
-                9,
-            ] = F.max_pool2d(heatmap[:, 9], kernel_size=1, stride=1, padding=0)
-        elif self.test_cfg["dataset"] == "Waymo":  # for Pedestrian & Cyclist in Waymo
-            local_max[
-                :,
-                1,
-            ] = F.max_pool2d(heatmap[:, 1], kernel_size=1, stride=1, padding=0)
-            local_max[
-                :,
-                2,
-            ] = F.max_pool2d(heatmap[:, 2], kernel_size=1, stride=1, padding=0)
+        # ## for Pedestrian & Traffic_cone in nuScenes    # del by why
+        # if self.test_cfg["dataset"] == "nuScenes":
+        #     local_max[:,8,] = F.max_pool2d(heatmap[:, 8], kernel_size=1, stride=1, padding=0)
+        #     local_max[:,9,] = F.max_pool2d(heatmap[:, 9], kernel_size=1, stride=1, padding=0)
+        # elif self.test_cfg["dataset"] == "Waymo":  # for Pedestrian & Cyclist in Waymo
+        #     local_max[:,1,] = F.max_pool2d(heatmap[:, 1], kernel_size=1, stride=1, padding=0)
+        #     local_max[:,2,] = F.max_pool2d(heatmap[:, 2], kernel_size=1, stride=1, padding=0)
+        # add by why
+        local_max[:,0,] = F.max_pool2d(heatmap[:, 0], kernel_size=1, stride=1, padding=0)
+        local_max[:,1,] = F.max_pool2d(heatmap[:, 1], kernel_size=1, stride=1, padding=0)                
         heatmap = heatmap * (heatmap == local_max)
         heatmap = heatmap.view(batch_size, heatmap.shape[1], -1)
 
@@ -303,6 +303,8 @@ class TransFusionHead(nn.Module):
 
             # Transformer Decoder Layer
             # :param query: B C Pq    :param query_pos: B Pq 3/6
+            # print("bev_pos+++++++++++++",bev_pos.shape)
+            # print("query_pos+++++++++++++",query_pos.shape)
             query_feat = self.decoder[i](
                 query_feat, lidar_feat_flatten, query_pos, bev_pos
             )
@@ -438,6 +440,7 @@ class TransFusionHead(nn.Module):
             score, rot, dim, center, height, vel
         )  # decode the prediction to real world metric bbox
         bboxes_tensor = boxes_dict[0]["bboxes"]
+        # print("gt_bboxes_3d++++++++++:    ",gt_bboxes_3d.tensor.shape)
         gt_bboxes_tensor = gt_bboxes_3d.tensor.to(score.device)
         # each layer should do label assign seperately.
         if self.auxiliary:
