@@ -100,6 +100,7 @@ class DefaultFormatBundle3D:
                         [self.class_names.index(n) for n in results["gt_names_3d"]],
                         dtype=np.int64,
                     )
+        # print("results: +++++++++++++++   ",results)            
         if "img" in results:
             results["img"] = DC(torch.stack(results["img"]), stack=True)
 

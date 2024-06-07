@@ -155,6 +155,10 @@ def bbox_overlaps_3d(bboxes1, bboxes2, mode="iou", coordinate="camera"):
         torch.Tensor: Bbox overlaps results of bboxes1 and bboxes2 \
             with shape (M, N) (aligned mode is not supported currently).
     """
+
+    # add by why
+    if(not bboxes1.size(-1) == bboxes2.size(-1)):
+        bboxes1 = bboxes1[:,:bboxes2.size(-1)]
     assert bboxes1.size(-1) == bboxes2.size(-1) >= 7
 
     box_type, _ = get_box_type(coordinate)

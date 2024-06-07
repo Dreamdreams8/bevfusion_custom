@@ -48,9 +48,9 @@ class GTDepth:
 
         points = data['points'].data 
         img = data['img'].data
-
-        if self.keyframe_only:
-            points = points[points[:, 4] == 0]
+	# add by why
+        # if self.keyframe_only:
+        #     points = points[points[:, 4] == 0]
 
         batch_size = len(points)
         depth = torch.zeros(img.shape[0], *img.shape[-2:]) #.to(points[0].device)
