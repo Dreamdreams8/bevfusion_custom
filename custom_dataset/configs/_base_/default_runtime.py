@@ -10,9 +10,9 @@ log_config = dict(
 
 seed = 0
 deterministic = False
-load_from = False
-# load_from      = '/home/data/BEV_Detection/bevfusion-main_v1/pretrained/2022-11-03-test/epoch_16.pth'
+# load_from = False
+load_from  =  '/home/bevfusion/output/lidar_result/epoch_24.pth'
 resume_from = False
 cudnn_benchmark = False
-distributed = True
+distributed = False
 dist_params = dict(backend='nccl')

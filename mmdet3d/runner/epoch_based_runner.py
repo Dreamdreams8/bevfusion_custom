@@ -11,5 +11,4 @@ class CustomEpochBasedRunner(EpochBasedRunner):
         # update the schedule for data augmentation
         for dataset in self._dataset:
             dataset.set_epoch(self.epoch)
-        print("**kwargs++++++++++++++++:    ",**kwargs)    
         super().train(data_loader, **kwargs)

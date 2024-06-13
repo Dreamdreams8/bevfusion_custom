@@ -221,7 +221,7 @@ class TransFusionHead(nn.Module):
             list[dict]: Output results for tasks.
         """
         batch_size = inputs.shape[0]
-        lidar_feat = self.shared_conv(inputs)
+        lidar_feat = self.shared_conv(inputs)    # [BS,128,128,128]
 
         #################################
         # image to BEV
@@ -229,6 +229,7 @@ class TransFusionHead(nn.Module):
         lidar_feat_flatten = lidar_feat.view(
             batch_size, lidar_feat.shape[1], -1
         )  # [BS, C, H*W]
+        # [BS, 128*128, 2]  相当于每个网格中的位置
         bev_pos = self.bev_pos.repeat(batch_size, 1, 1).to(lidar_feat.device)
 
         #################################
@@ -251,18 +252,21 @@ class TransFusionHead(nn.Module):
         # elif self.test_cfg["dataset"] == "Waymo":  # for Pedestrian & Cyclist in Waymo
         #     local_max[:,1,] = F.max_pool2d(heatmap[:, 1], kernel_size=1, stride=1, padding=0)
         #     local_max[:,2,] = F.max_pool2d(heatmap[:, 2], kernel_size=1, stride=1, padding=0)
-        # add by why
+        # add by why   相当于失效，有待验证修改效果
         local_max[:,0,] = F.max_pool2d(heatmap[:, 0], kernel_size=1, stride=1, padding=0)
         local_max[:,1,] = F.max_pool2d(heatmap[:, 1], kernel_size=1, stride=1, padding=0)                
         heatmap = heatmap * (heatmap == local_max)
         heatmap = heatmap.view(batch_size, heatmap.shape[1], -1)
 
         # top #num_proposals among all classes
+        # 取出前self.num_proposals(默认200)的索引位置，保存到top_proposals中
         top_proposals = heatmap.view(batch_size, -1).argsort(dim=-1, descending=True)[
             ..., : self.num_proposals
         ]
+        # 分别计算出top_proposal代表的类别和所在通道内的索引 
         top_proposals_class = top_proposals // heatmap.shape[-1]
         top_proposals_index = top_proposals % heatmap.shape[-1]
+        # 借助上一步计算得到的热点top_proposals_index从lidar_feat_flatten中收集特征
         query_feat = lidar_feat_flatten.gather(
             index=top_proposals_index[:, None, :].expand(
                 -1, lidar_feat_flatten.shape[1], -1
@@ -275,7 +279,7 @@ class TransFusionHead(nn.Module):
         one_hot = F.one_hot(top_proposals_class, num_classes=self.num_classes).permute(
             0, 2, 1
         )
-        query_cat_encoding = self.class_encoding(one_hot.float())
+        query_cat_encoding = self.class_encoding(one_hot.float())  # 2维->128
         query_feat += query_cat_encoding
 
         query_pos = bev_pos.gather(
@@ -713,12 +717,16 @@ class TransFusionHead(nn.Module):
         rets = []
         for layer_id, preds_dict in enumerate(preds_dicts):
             batch_size = preds_dict[0]["heatmap"].shape[0]
+            # print("+++++++++++++++self.num_proposals    ",self.num_proposals)
             batch_score = preds_dict[0]["heatmap"][..., -self.num_proposals :].sigmoid()
             # if self.loss_iou.loss_weight != 0:
             #    batch_score = torch.sqrt(batch_score * preds_dict[0]['iou'][..., -self.num_proposals:].sigmoid())
+            # print("+++++++++++++++self.self.num_classes    ",self.num_classes)
+            # print("+++++++++++++++self.self.query_labels    ",self.query_labels)
             one_hot = F.one_hot(
                 self.query_labels, num_classes=self.num_classes
             ).permute(0, 2, 1)
+            # print("+++++++++++++++++one_hot:   ",one_hot)
             batch_score = batch_score * preds_dict[0]["query_heatmap_score"] * one_hot
 
             batch_center = preds_dict[0]["center"][..., -self.num_proposals :]
@@ -736,7 +744,7 @@ class TransFusionHead(nn.Module):
                 batch_center,
                 batch_height,
                 batch_vel,
-                filter=True,
+                filter=True,     
             )
 
             if self.test_cfg["dataset"] == "nuScenes":
@@ -768,6 +776,13 @@ class TransFusionHead(nn.Module):
                     ),
                     dict(num_class=1, class_names=["Cyclist"], indices=[2], radius=0.7),
                 ]
+            else:         # add by why
+                self.tasks = [
+                    dict(num_class=1, class_names=["car"], indices=[0], radius=0.7),
+                    dict(
+                        num_class=1, class_names=["truck"], indices=[1], radius=0.7
+                    ),
+                ]                    
 
             ret_layer = []
             for i in range(batch_size):

@@ -16,6 +16,7 @@ from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
 from mmdet3d.utils import get_root_logger, convert_sync_batchnorm, recursive_eval
 
+from mmcv.runner import load_checkpoint   # add by why
 
 def main():
     # dist.init()   # del by why
@@ -69,6 +70,7 @@ def main():
     datasets = [build_dataset(cfg.data.train)]
 
     model = build_model(cfg.model)
+    # 后文通过配置可加载预训练模型
     model.init_weights()
     if cfg.get("sync_bn", None):
         if not isinstance(cfg["sync_bn"], dict):

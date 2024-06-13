@@ -4,12 +4,14 @@ import torch
 
 def single_gpu_test(model, data_loader):
     model.eval()
+    # print("model: ",model)
     results = []
     dataset = data_loader.dataset
     prog_bar = mmcv.ProgressBar(len(dataset))
     for data in data_loader:
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
+            # print("result++++++++++:    ",result)
         results.extend(result)
 
         batch_size = len(result)

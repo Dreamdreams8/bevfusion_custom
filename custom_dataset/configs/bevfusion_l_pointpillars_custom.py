@@ -15,16 +15,19 @@ data_config = {
 }
 
 root_path = '/home/bevfusion/'
+use_pretrained = False
+fuse_pretrained_path = root_path +  'output/lidar_result/latest.pth'
+
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
 dataset_root = root_path + 'data/custom_data/'
 
-gt_paste_stop_epoch = -1
+gt_paste_stop_epoch = 15    # change by why
 reduce_beams = 32
 load_dim = 4
 use_dim = 4
 load_augmented = False
-max_epochs = 24
+max_epochs = 450         # change by why
 
 point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
 voxel_size = [0.2, 0.2, 8]
@@ -87,7 +90,7 @@ model = dict(
             type='TransFusionHead',
             num_proposals=200,
             auxiliary=True,
-            in_channels=384 ,  # 需确定输入是384还是128
+            in_channels=384 ,  
             hidden_channel=128,
             num_classes=2,
             num_decoder_layers=1,
@@ -96,13 +99,13 @@ model = dict(
             ffn_channel=256,
             dropout=0.1,
             bn_momentum=0.1,
-            activation="relu",   # 待确认是否可以识别
+            activation="relu",   
             train_cfg=dict(
-                # dataset=MyCustomDataset   # 待确认是否需要
+                dataset="MyCustomDataset",   
                 point_cloud_range=point_cloud_range,
-                grid_size=[1024, 1024, 1],
+                grid_size=[512, 512, 1],           # 注意此处代表的意义
                 voxel_size=voxel_size,
-                out_size_factor=8,
+                out_size_factor=4,                  # 注意此处代表的意义
                 gaussian_overlap=0.1,
                 min_radius=2,
                 pos_weight=-1,
@@ -130,14 +133,22 @@ model = dict(
                 )                
             ),
             test_cfg=dict(
-                # dataset=MyCustomDataset   # 待确认是否需要
+                dataset="MyCustomDataset",
                 point_cloud_range=point_cloud_range,
-                grid_size=[1024, 1024, 1],
+                grid_size=[512, 512, 1],
                 voxel_size=voxel_size[:2],
-                out_size_factor=8,
+                out_size_factor=4,
                 pc_range=point_cloud_range[:2],
                 nms_type=['circle', 'rotate', 'rotate', 'circle', 'rotate', 'rotate'],
                 gaussian_overlap=0.1,      
+                # pre_max_size=1000,
+                pre_maxsize=1000,
+                post_maxsize=83,
+                nms_thr=0.2,
+                nms_scale=[[1.0], [1.0, 1.0], [1.0, 1.0], [1.0], [1.0, 1.0], [2.5, 4.0]],       
+                max_pool_nms=False,
+                min_radius=[4, 12, 10, 1, 0.85, 0.175],
+                score_threshold=0.05,                         
             ),
             # tasks=[
             #     ["car"], ["truck"]
@@ -148,11 +159,12 @@ model = dict(
             bbox_coder=dict(
                 type='TransFusionBBoxCoder',
                 pc_range=point_cloud_range[:2],
-                post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-                score_threshold=0.1,
-                out_size_factor=8,
+                post_center_range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],     # change by why
+                # post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
+                score_threshold=0.05,      # change by why  0.1
+                out_size_factor=4,
                 voxel_size=voxel_size[:2],
-                code_size=8   # 看看是8还是10
+                code_size=8   
             ),
             loss_cls=dict(
                 type='FocalLoss', 
@@ -265,7 +277,8 @@ test_pipeline = [
     dict(
         type='ImageAug3D',
         final_dim=image_size,
-        resize_lim=augment2d['resize'][1],
+        # resize_lim=augment2d['resize'][1],
+        resize_lim=augment2d['resize'][0],               # change by why
         bot_pct_lim=[0.0, 0.0],
         rot_lim=[0.0, 0.0],
         rand_flip=False,

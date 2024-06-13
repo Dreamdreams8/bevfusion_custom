@@ -112,7 +112,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    dist.init()
+    # dist.init()
 
     torch.backends.cudnn.benchmark = True
     torch.cuda.set_device(dist.local_rank())
@@ -132,17 +132,17 @@ def main():
     # configs.load(args.config, recursive=True)
     # cfg = Config(recursive_eval(configs), filename=args.config)
     cfg = Config.fromfile(args.config)
-    print(cfg)
+    # print(cfg)
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
     # set cudnn_benchmark
     if cfg.get("cudnn_benchmark", False):
         torch.backends.cudnn.benchmark = True
-
+    # print("+++++++++++++++cfg.model.pretrained:   ",cfg.model.pretrained)
     cfg.model.pretrained = None
     # in case the test dataset is concatenated
-    samples_per_gpu = 1
+    samples_per_gpu = 4
     if isinstance(cfg.data.test, dict):
         cfg.data.test.test_mode = True
         samples_per_gpu = cfg.data.test.pop("samples_per_gpu", 1)
@@ -160,7 +160,7 @@ def main():
                 ds_cfg.pipeline = replace_ImageToTensor(ds_cfg.pipeline)
 
     # init distributed env first, since logger depends on the dist info.
-    distributed = True
+    distributed = False   # change by why
 
     # set random seeds
     if args.seed is not None:
@@ -177,11 +177,13 @@ def main():
     )
 
     # build the model and load checkpoint
+    # print("=---------------------cfg.model.train_cfg:   ",cfg.model.train_cfg)
     cfg.model.train_cfg = None
     model = build_model(cfg.model, test_cfg=cfg.get("test_cfg"))
     fp16_cfg = cfg.get("fp16", None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
+    
     checkpoint = load_checkpoint(model, args.checkpoint, map_location="cpu")
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
@@ -191,7 +193,7 @@ def main():
         model.CLASSES = checkpoint["meta"]["CLASSES"]
     else:
         model.CLASSES = dataset.CLASSES
-
+    
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
         outputs = single_gpu_test(model, data_loader)
@@ -202,8 +204,10 @@ def main():
             broadcast_buffers=False,
         )
         outputs = multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
-
+    # print("outputs++++++++++++++++++    ",outputs)
+    return
     rank, _ = get_dist_info()
+    print("rank:     ",rank)
     if rank == 0:
         if args.out:
             print(f"\nwriting results to {args.out}")

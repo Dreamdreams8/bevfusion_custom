@@ -122,7 +122,6 @@ class BEVFusionSimple(BEVFusion):
 
         x = self.decoder["backbone"](x)
         x = self.decoder["neck"](x)
-
         if self.training:
             outputs = {}
             for type, head in self.heads.items():
@@ -144,8 +143,27 @@ class BEVFusionSimple(BEVFusion):
             for type, head in self.heads.items():
                 if type == "object":
                     pred_dict = head(x, metas)
+                    # print("+=======+++++++++pred_dict:  ",len(pred_dict))       
+                    # print("+=======+++++++++pred_dict:  ",len(pred_dict[0]))      
+                    # print("+=======+++++++++pred_dict:  ",pred_dict[0][0])  
+                    # print("+=======+++++++++shape:  ",pred_dict["query_heatmap_score"].shape)
+                    # print("+=======+++++++++metas:  ",metas)         
+                    # print("+=======+++++++++center:  ",pred_dict[0][0]["center"].shape)         
+                    # print("++++++++++++++++++++pred_dict[0][0]cebter:   ",pred_dict[0][0]["center"])
+                    # print("+=======+++++++++height:  ",pred_dict[0][0]["height"].shape)       
+                    # print("+=======+++++++++rot:  ",pred_dict[0][0]["rot"].shape)        
+                    # print("+=======+++++++++dim:  ",pred_dict[0][0]["dim"].shape)    
+                    # print("+=======+++++++++heatmap:  ",pred_dict[0][0]["heatmap"].shape)            
+                    # print("+=======+++++++++dense_heatmap:  ",pred_dict[0][0]["dense_heatmap"].shape)           
                     bboxes = head.get_bboxes(pred_dict, metas)
                     for k, (boxes, scores, labels) in enumerate(bboxes):
+                        # print("+++++++++boxes:   ",boxes)
+                        # print("+++++++++scores:   ",scores)
+                        # print("+++++++++labels:   ",labels)
+                        # print("+++++++++boxesshape:   ",boxes.size)
+                        # print("+++++++++scoresshape:   ",scores.size)
+                        # print("+++++++++labelsshape:   ",labels.size)                        
+                        # print("+++++++++:   ",k)                        
                         outputs[k].update(
                             {
                                 "boxes_3d": boxes.to("cpu"),

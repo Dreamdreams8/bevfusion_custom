@@ -1,7 +1,9 @@
 TEST_PY='custom_dataset/tools/test.py'
-CONFIG_FILE='custom_dataset/configs/bevfusion_c_l_meg.py'
-PTH='pretrained/2023-06-13_08-46-56/epoch_24.pth'
+CONFIG_FILE='custom_dataset/configs/bevfusion_l_pointpillars_custom.py'
+# PTH='output/lidar_result/epoch_24.pth'
+PTH='output/lidar_result/latest.pth'
 EVAL='map'
 
+CUDA_VISIBLE_DEVICES=0 python ${TEST_PY} ${CONFIG_FILE}  ${PTH} --eval bbox
 # torchpack dist-run -np 1 python ${TEST_PY} ${CONFIG_FILE} ${PTH} --eval ${EVAL}
-torchpack dist-run -np 1 python -m debugpy --listen 8531 --wait-for-client ${TEST_PY} ${CONFIG_FILE} ${PTH} --eval ${EVAL}
+# torchpack dist-run -np 1 python -m debugpy --listen 8531 --wait-for-client ${TEST_PY} ${CONFIG_FILE} ${PTH} --eval ${EVAL}
