@@ -42,3 +42,5 @@ if __name__ == "__main__":
             dataset_name="MyCustomDataset",
             out_dir=args.out_dir
         )
+# python custom_dataset/tools/create_data.py custom --root-path data/20240617-720 --out-dir data/20240617-720 --extra-tag custom 
+        

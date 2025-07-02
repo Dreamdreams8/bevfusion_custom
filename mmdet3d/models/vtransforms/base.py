@@ -34,8 +34,8 @@ class BaseTransform(nn.Module):
         dbound: Tuple[float, float, float],
         use_points='lidar', 
         depth_input='scalar',
-        height_expand=False,      # change by why
-        add_depth_features=False,    # change by why
+        height_expand=True,
+        add_depth_features=True,
     ) -> None:
         super().__init__()
         self.in_channels = in_channels

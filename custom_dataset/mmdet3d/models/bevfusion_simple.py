@@ -71,18 +71,112 @@ class BEVFusionSimple(BEVFusion):
                 feats = feats.contiguous()
 
         return feats, coords, sizes
+    # 融合模块推理
+    # @auto_fp16(apply_to=("img"))
+    # def forward(
+    #         self,
+    #         img,
+    #         points,
+    #         camera2ego,
+    #         camera2lidar,
+    #         camera_intrinsics,
+    #         img_aug_matrix,
+    #         lidar_aug_matrix,
+    #         metas,
+    #         gt_masks_bev=None,
+    #         gt_bboxes_3d=None,
+    #         gt_labels_3d=None,
+    #         **kwargs,
+    # ):
+    #     features = []
+    #     # for sensor in self.encoders:
+    #     for sensor in (
+    #             self.encoders if self.training else list(self.encoders.keys())[::-1]
+    #     ):
+    #         if sensor == "camera":
+    #             feature = self.extract_camera_features(
+    #                 img,
+    #                 camera2lidar,
+    #                 camera_intrinsics,
+    #                 img_aug_matrix,
+    #                 lidar_aug_matrix,
+    #             )
+    #         elif sensor == "lidar":
+    #             # feature = self.extract_lidar_features(points)
+    #             feature = self.extract_features(points,sensor)   # change by why
+    #         else:
+    #             raise ValueError(f"unsupported sensor: {sensor}")
+    #         features.append(feature)
 
-    @auto_fp16(apply_to=("img"))
+    #     if not self.training:
+    #         # avoid OOM
+    #         features = features[::-1]
+
+    #     if self.fuser is not None:
+    #         x = self.fuser(features)
+    #     else:
+    #         assert len(features) == 1, features
+    #         x = features[0]
+
+    #     batch_size = x.shape[0]
+
+    #     x = self.decoder["backbone"](x)
+    #     x = self.decoder["neck"](x)
+    #     if self.training:
+    #         outputs = {}
+    #         for type, head in self.heads.items():
+    #             if type == "object":
+    #                 pred_dict = head(x, metas)
+    #                 losses = head.loss(gt_bboxes_3d, gt_labels_3d, pred_dict)
+    #             elif type == "map":
+    #                 losses = head(x, gt_masks_bev)
+    #             else:
+    #                 raise ValueError(f"unsupported head: {type}")
+    #             for name, val in losses.items():
+    #                 if val.requires_grad:
+    #                     outputs[f"loss/{type}/{name}"] = val * self.loss_scale[type]
+    #                 else:
+    #                     outputs[f"stats/{type}/{name}"] = val
+    #         return outputs
+    #     else:
+    #         outputs = [{} for _ in range(batch_size)]
+    #         for type, head in self.heads.items():
+    #             if type == "object":
+    #                 pred_dict = head(x, metas)          
+    #                 bboxes = head.get_bboxes(pred_dict, metas)
+    #                 for k, (boxes, scores, labels) in enumerate(bboxes):                     
+    #                     outputs[k].update(
+    #                         {
+    #                             "boxes_3d": boxes.to("cpu"),
+    #                             "scores_3d": scores.cpu(),
+    #                             "labels_3d": labels.cpu(),
+    #                         }
+    #                     )
+    #             elif type == "map":
+    #                 logits = head(x)
+    #                 for k in range(batch_size):
+    #                     outputs[k].update(
+    #                         {
+    #                             "masks_bev": logits[k].cpu(),
+    #                             "gt_masks_bev": gt_masks_bev[k].cpu(),
+    #                         }
+    #                     )
+    #             else:
+    #                 raise ValueError(f"unsupported head: {type}")
+    #         return outputs
+
+    # 单激光推理
+    @auto_fp16(apply_to=("img", "points"))
     def forward(
             self,
-            img,
             points,
-            camera2ego,
-            camera2lidar,
-            camera_intrinsics,
-            img_aug_matrix,
-            lidar_aug_matrix,
             metas,
+            img=None,
+            camera2ego=None,
+            camera2lidar=None,
+            camera_intrinsics=None,
+            img_aug_matrix=None,
+            lidar_aug_matrix=None,
             gt_masks_bev=None,
             gt_bboxes_3d=None,
             gt_labels_3d=None,
@@ -94,6 +188,8 @@ class BEVFusionSimple(BEVFusion):
                 self.encoders if self.training else list(self.encoders.keys())[::-1]
         ):
             if sensor == "camera":
+                if img is None:
+                    continue  # 如果没有图像数据，跳过相机特征提取
                 feature = self.extract_camera_features(
                     img,
                     camera2lidar,
@@ -102,8 +198,7 @@ class BEVFusionSimple(BEVFusion):
                     lidar_aug_matrix,
                 )
             elif sensor == "lidar":
-                # feature = self.extract_lidar_features(points)
-                feature = self.extract_features(points,sensor)   # change by why
+                feature = self.extract_features(points, sensor)   # change by why
             else:
                 raise ValueError(f"unsupported sensor: {sensor}")
             features.append(feature)
@@ -143,27 +238,8 @@ class BEVFusionSimple(BEVFusion):
             for type, head in self.heads.items():
                 if type == "object":
                     pred_dict = head(x, metas)
-                    # print("+=======+++++++++pred_dict:  ",len(pred_dict))       
-                    # print("+=======+++++++++pred_dict:  ",len(pred_dict[0]))      
-                    # print("+=======+++++++++pred_dict:  ",pred_dict[0][0])  
-                    # print("+=======+++++++++shape:  ",pred_dict["query_heatmap_score"].shape)
-                    # print("+=======+++++++++metas:  ",metas)         
-                    # print("+=======+++++++++center:  ",pred_dict[0][0]["center"].shape)         
-                    # print("++++++++++++++++++++pred_dict[0][0]cebter:   ",pred_dict[0][0]["center"])
-                    # print("+=======+++++++++height:  ",pred_dict[0][0]["height"].shape)       
-                    # print("+=======+++++++++rot:  ",pred_dict[0][0]["rot"].shape)        
-                    # print("+=======+++++++++dim:  ",pred_dict[0][0]["dim"].shape)    
-                    # print("+=======+++++++++heatmap:  ",pred_dict[0][0]["heatmap"].shape)            
-                    # print("+=======+++++++++dense_heatmap:  ",pred_dict[0][0]["dense_heatmap"].shape)           
                     bboxes = head.get_bboxes(pred_dict, metas)
                     for k, (boxes, scores, labels) in enumerate(bboxes):
-                        # print("+++++++++boxes:   ",boxes)
-                        # print("+++++++++scores:   ",scores)
-                        # print("+++++++++labels:   ",labels)
-                        # print("+++++++++boxesshape:   ",boxes.size)
-                        # print("+++++++++scoresshape:   ",scores.size)
-                        # print("+++++++++labelsshape:   ",labels.size)                        
-                        # print("+++++++++:   ",k)                        
                         outputs[k].update(
                             {
                                 "boxes_3d": boxes.to("cpu"),
@@ -183,3 +259,4 @@ class BEVFusionSimple(BEVFusion):
                 else:
                     raise ValueError(f"unsupported head: {type}")
             return outputs
+

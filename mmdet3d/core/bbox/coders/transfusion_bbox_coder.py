@@ -56,7 +56,7 @@ class TransFusionBBoxCoder(BaseBBoxCoder):
         # class label
         final_preds = heatmap.max(1, keepdims=False).indices
         final_scores = heatmap.max(1, keepdims=False).values
-        # print("+++++++++++++++++final_scores   ",                 final_scores)
+
         # change size to real world metric
         center[:, 0, :] = center[:, 0, :] * self.out_size_factor * self.voxel_size[0] + self.pc_range[0]
         center[:, 1, :] = center[:, 1, :] * self.out_size_factor * self.voxel_size[1] + self.pc_range[1]

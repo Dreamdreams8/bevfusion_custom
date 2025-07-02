@@ -9,21 +9,35 @@ from custom_dataset.mmdet3d.datasets.custom_dataset import MyCustomDataset
 from mmdet3d.datasets import NuScenesDataset
 import math
 
-# 左边为标注标签
-class_id = {"Truck" : "truck","Car" : "car"}
+# 左边为标注标签                                                         Bridge                                                            Forklift
+class_id = {"Truck" : "truck","Car" : "car","Lockstation" : "lockstation",
+        "Bridge" : "bridge","Forklift" : "forklift","Conetank" : "conetank",
+        "Lockbox" : "lockbox",
+        "ForkLift" : "forkLift","Pedestrian" : "pedestrian"}                                   
 
 def _read_imageset_file(path):
-    with open(path, 'r') as f:
-        lines = f.readlines()  
-    return [str(int(line)).zfill(len(line)-1) for line in lines]
-    # return [int(line) for line in lines]
+    try:
+        result = []
+        with open(path, 'r') as f:
+            for line in f:
+                # 去除行尾的换行符
+                clean_line = line.rstrip('\n')
+                result.append(clean_line)
+        return result
+    except FileNotFoundError:
+        print(f"文件 {path} 未找到，请检查路径。")
+        return []
+    except ValueError:
+        print(f"文件 {path} 中的内容存在问题，请检查文件内容。")
+        return []
 
 def get_train_val_scenes(root_path):
     """
-    划分训练集和测试集
+    划分训练集和测试集float
     """
     imageset_folder = osp.join(root_path, 'ImageSets')
     train_img_ids = _read_imageset_file(str(imageset_folder + '/train.txt'))
+    # print("train_scenes:  ",train_img_ids)
     val_img_ids = _read_imageset_file(str(imageset_folder + '/val.txt'))
     # test_img_ids = _read_imageset_file(str(imageset_folder + '/test.txt'))    
     return  train_img_ids,val_img_ids
@@ -79,8 +93,8 @@ def _fill_trainval_infos(root_path, train_scenes, val_scenes, test=False):
     available_scene_names = train_scenes + val_scenes
     for sid, scenes_id in enumerate(available_scene_names):  
         frame_id = scenes_id
-        lidar_path =  osp.abspath(osp.join(root_path,"training","velodyne",str(scenes_id) + ".npy"))
-        label_path = osp.abspath(osp.join(root_path,"training","label_2",str(scenes_id)+ ".txt"))
+        lidar_path =  osp.abspath(osp.join(root_path,"points",str(scenes_id) + ".bin"))
+        label_path = osp.abspath(osp.join(root_path,"labels",str(scenes_id)+ ".txt"))
         # print("label_path:  ",label_path)
         # dataset infos
         # lidar2ego_rotation_matrix = Quaternion(w=1, x=0, y=0, z=0)
@@ -106,7 +120,7 @@ def _fill_trainval_infos(root_path, train_scenes, val_scenes, test=False):
         ]        
 
         for cam in camera_types:
-            cam_path =  osp.abspath(osp.join(root_path,"training","image_2",cam,str(scenes_id)+ ".png"))
+            cam_path =  osp.abspath(osp.join(root_path,"camera",cam,str(scenes_id)+ ".jpg"))
             cam_info = {
                 'data_path': cam_path,
                 'type': cam,
@@ -122,12 +136,14 @@ def _fill_trainval_infos(root_path, train_scenes, val_scenes, test=False):
         gt_names = []
         with open(label_path, 'r') as f:
             lines = f.readlines()
+        # print("+++++++++++++++++: ",label_path)    
         for line in lines:
             line_list = line.strip().split(' ')
             gt_boxes.append(np.array(line_list[:-1],dtype = np.float32))
             # class_id.index(line_list[-1])   # 这里要注意是存id还是字符
             gt_names.append(class_id[line_list[-1]])  # 字符
             # gt_names.append(class_id.index(line_list[-1]))
+        # print("gt_names+++++++++++++++++++++++++++++++:  ",gt_names)
         info["gt_boxes"] = np.array(gt_boxes)
         info["gt_names"] = np.array(gt_names)
         info['gt_velocity'] = np.array([0,0] * len(gt_names)).reshape(-1, 2)  # 没有速度，只是为了跟nuscences对齐

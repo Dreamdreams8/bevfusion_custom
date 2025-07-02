@@ -51,11 +51,23 @@ class CBGSDataset:
         sample_indices = []
 
         frac = 1.0 / len(self.CLASSES)
-        ratios = [frac / v for v in class_distribution.values()]
+        ratios = [frac / v for v in class_distribution.values()]   
         for cls_inds, ratio in zip(list(class_sample_idxs.values()), ratios):
             sample_indices += np.random.choice(
                 cls_inds, int(len(cls_inds) * ratio)
-            ).tolist()
+            ).tolist()        
+        # # 避免类别个数为0导致除零错误 # change by why
+        # ratios = []
+        # for v in class_distribution.values():
+        #     if v == 0:
+        #         ratios.append(0)  # 对于空类别，设置比例为0
+        #     else:
+        #         ratios.append(frac / v)
+        # for cls_inds, ratio in zip(list(class_sample_idxs.values()), ratios):
+        #     if len(cls_inds) > 0 and ratio > 0:  # 只对非空类别进行采样  # change by why
+        #         sample_indices += np.random.choice(
+        #             cls_inds, int(len(cls_inds) * ratio)
+        #         ).tolist()
         return sample_indices
 
     def __getitem__(self, idx):

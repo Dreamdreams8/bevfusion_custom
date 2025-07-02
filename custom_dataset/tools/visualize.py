@@ -86,12 +86,12 @@ def main() -> None:
         metas = data["metas"].data[0][0]
         # name = "{}-{}".format(metas["timestamp"], metas["token"])
         name = "{}".format(metas["timestamp"])
-
+        
         if args.mode == "pred":
             with torch.inference_mode():
                 outputs = model(**data)
-                print("outputs:    ",outputs)
-
+                # print("outputs:    ",outputs)
+                
         if args.mode == "gt" and "gt_bboxes_3d" in data:
             bboxes = data["gt_bboxes_3d"].data[0][0].tensor.numpy()
             labels = data["gt_labels_3d"].data[0][0].numpy()
@@ -125,6 +125,7 @@ def main() -> None:
             bboxes = None
             labels = None
 
+
         if args.mode == "gt" and "gt_masks_bev" in data:
             masks = data["gt_masks_bev"].data[0].numpy()
             masks = masks.astype(np.bool)
@@ -134,7 +135,12 @@ def main() -> None:
         else:
             masks = None
 
-        if "img" in data:
+        # 角度可视化纠正        
+        bboxes_tensor = bboxes.tensor
+        bboxes_tensor[:, 6] = -bboxes_tensor[:, 6]  # 反转 yaw 角度
+        bboxes = LiDARInstance3DBoxes(bboxes_tensor)  # 重新封装回去（可选）
+     
+        if "img" in data:           
             for k, image_path in enumerate(metas["filename"]):
                 image = mmcv.imread(image_path)
                 visualize_camera(
@@ -145,6 +151,7 @@ def main() -> None:
                     transform=metas["lidar2image"][k],
                     classes=cfg.object_classes,
                 )
+
 
         if "points" in data:
             lidar = data["points"].data[0][0].numpy()

@@ -80,4 +80,4 @@ optimizer:
 #   step_ratio_up: 0.4
 
 data:
-  samples_per_gpu: 1
+  samples_per_gpu: 4

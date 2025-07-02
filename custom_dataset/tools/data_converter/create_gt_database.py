@@ -28,8 +28,8 @@ def create_groundtruth_database(
             dict(
                 type="LoadPointsFromFile",
                 coord_type="LIDAR",
-                load_dim=5,
-                use_dim=5,
+                load_dim=4,    # change by why
+                use_dim=4,
             ),
             dict(
                 type="LoadAnnotations3D", with_bbox_3d=True, with_label_3d=True

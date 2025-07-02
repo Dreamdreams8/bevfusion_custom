@@ -14,19 +14,19 @@ data_config = {
     'cams': ['cam_front', 'cam_left', 'cam_right']
 }
 
-root_path = '/home/bevfusion/'
+root_path = '/data/why/bevfusion/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
-dataset_root = root_path + 'data/custom_data/'
+dataset_root = root_path + 'data/20240617-720/'
 
 gt_paste_stop_epoch = -1
 reduce_beams = 32
 load_dim = 4
 use_dim = 4
 load_augmented = False
-max_epochs = 24
+max_epochs = 200
 
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+point_cloud_range = [-51.2, -51.2, -1.0, 51.2, 51.2, 7.0]
 voxel_size = [0.1, 0.1, 0.2]
 image_size = [256, 704]   # 370\1224
 
@@ -42,7 +42,7 @@ augment3d = {
 }
 
 object_classes = [
-    'car', 'truck'
+    'truck'
 ]
 
 model = dict(
@@ -86,7 +86,7 @@ model = dict(
         ),
         camera=dict(
             backbone=dict(
-                pretrained=pretrained_path + 'resnet50-0676ba61.pth',
+                # pretrained=pretrained_path + 'resnet50-0676ba61.pth',
                 type='ResNet',
                 depth=50,
                 num_stages=4,

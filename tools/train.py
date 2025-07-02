@@ -16,31 +16,23 @@ from mmdet3d.datasets import build_dataset
 from mmdet3d.models import build_model
 from mmdet3d.utils import get_root_logger, convert_sync_batchnorm, recursive_eval
 
-import sys
-# sys.argv = ['tools/train.py', 'configs/nuscenes/det/transfusion/secfpn/camera+lidar/swint_v0p075/convfuser.yaml',
-#             '--run-dir', 'Res/test_mini'
-# ]
-# sys.argv = ['tools/train.py', 'configs/once/det/transfusion/secfpn/camera+lidar/swint_v0p075/convfuser.yaml',
-#             '--run-dir', 'Res/test_once_mini'
-# ]
 
-#python tools/train.py configs/once/det/transfusion/secfpn/camera+lidar/swint_v0p075/convfuser.yaml --run-dir Res/test_once_mini_6cam
 def main():
-    # dist.init()
+    dist.init()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("config", metavar="FILE", help="config file")
     parser.add_argument("--run-dir", metavar="DIR", help="run directory")
     args, opts = parser.parse_known_args()
-    
+
     configs.load(args.config, recursive=True)
     configs.update(opts)
 
     cfg = Config(recursive_eval(configs), filename=args.config)
 
     torch.backends.cudnn.benchmark = cfg.cudnn_benchmark
-    torch.cuda.set_device(0)
-    #torch.cuda.set_device(dist.local_rank())
+    torch.cuda.set_device(dist.local_rank())
+
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
     else:
@@ -70,7 +62,7 @@ def main():
         if cfg.deterministic:
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
-    #print("cfg.data.train:   ",cfg.data.train)
+
     datasets = [build_dataset(cfg.data.train)]
 
     model = build_model(cfg.model)
@@ -85,7 +77,7 @@ def main():
         model,
         datasets,
         cfg,
-        distributed=False,
+        distributed=True,
         validate=True,
         timestamp=timestamp,
     )
@@ -93,5 +85,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

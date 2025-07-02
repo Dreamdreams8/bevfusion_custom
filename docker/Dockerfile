@@ -16,10 +16,8 @@ RUN conda install python=3.8
 RUN conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch
 RUN pip install Pillow==8.4.0
 RUN pip install tqdm
-RUN pip install torchpack -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install mmcv==1.4.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
-#RUN pip install mmcv-full==1.4.0 -i https://mirrors.aliyun.com/pypi/simple
-RUN pip install mmdet==2.20.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install nuscenes-devkit -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install mpi4py==3.0.3 -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install numba==0.48.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install torchpack
+RUN pip install mmcv==1.4.0 mmcv-full==1.4.0 mmdet==2.20.0
+RUN pip install nuscenes-devkit
+RUN pip install mpi4py==3.0.3
+RUN pip install numba==0.48.0

@@ -19,7 +19,7 @@ from mmdet3d.utils import get_root_logger, convert_sync_batchnorm, recursive_eva
 from mmcv.runner import load_checkpoint   # add by why
 
 def main():
-    # dist.init()   # del by why
+    dist.init()   # del by why
 
     parser = argparse.ArgumentParser()
     parser.add_argument("config", metavar="FILE", help="config file")
@@ -31,11 +31,12 @@ def main():
 
     # cfg = Config(recursive_eval(configs), filename=args.config)
     cfg = Config.fromfile(args.config)
+    cfg.gpu_ids = [0] 
 
     torch.backends.cudnn.benchmark = cfg.cudnn_benchmark
-    # torch.cuda.set_device(dist.local_rank())
+    torch.cuda.set_device(dist.local_rank())
     # change by why
-    torch.cuda.set_device(0)
+    # torch.cuda.set_device(0)
 
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
@@ -82,7 +83,7 @@ def main():
         model,
         datasets,
         cfg,
-        distributed=False,    # change by why
+        distributed=True,    # change by why
         validate=True,
         timestamp=timestamp,
     )

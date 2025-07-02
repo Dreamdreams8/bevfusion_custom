@@ -22,22 +22,55 @@ class MyCustomDataset(Custom3DDataset):
         "Car": "car",
         "Truck":"truck",
         "Pedestrian":"pedestrian",
-        "Cone":"cone",
-        "Lock":"lock"
+        "Lockstation":"lockstation",
+        "Bridge":"bridge",
+        "Lockbox" : "lockbox",
+        "Forklift" : "forklift",
+        "Conetank" : "conetank",
+        "Unknown":"unknown",
+        "Excavator":"excavator"
     }
 
     CLASSES = (
         "car",
         "truck",
-        # "trailer",
-        # "bus",
-        # "construction_vehicle",
-        # "bicycle",
-        # "motorcycle",
-        # "pedestrian",
-        # "traffic_cone",
-        # "barrier",
+        "lockstation",
+        "pedestrian",
+        "bridge",
+        "lockbox",
+        "forklift",
+        "conetank",
+        "unknown",
+        "excavator"
+
     )
+    
+    @classmethod
+    def get_classes(cls, classes=None):
+        """Get class names of current dataset.
+        
+        Args:
+            classes (Sequence[str] | str | None): If classes is None, use
+                default CLASSES defined by builtin dataset. If classes is a
+                string, take it as a file name. The file contains the name of
+                classes where each line contains one class name. If classes is
+                a tuple or list, override the CLASSES defined by the dataset.
+                
+        Return:
+            list[str]: A list of class names.
+        """
+        if classes is None:
+            return cls.CLASSES
+            
+        if isinstance(classes, str):
+            # take it as a file path
+            class_names = mmcv.list_from_file(classes)
+        elif isinstance(classes, (tuple, list)):
+            class_names = classes
+        else:
+            raise ValueError(f"Unsupported type {type(classes)} of classes.")
+            
+        return class_names
 
     def __init__(
         self,
@@ -51,6 +84,7 @@ class MyCustomDataset(Custom3DDataset):
         modality=None,
         box_type_3d="LiDAR",
         filter_empty_gt=True,
+        data_config=None,
         test_mode=False,
         eval_version="detection_cvpr_2019",
         use_valid_flag=False,
@@ -71,12 +105,13 @@ class MyCustomDataset(Custom3DDataset):
 
         self.with_velocity = with_velocity
         self.eval_version = eval_version
+        self.data_config = data_config
         from nuscenes.eval.detection.config import config_factory
 
         self.eval_detection_configs = config_factory(self.eval_version)
         if self.modality is None:
             self.modality = dict(
-                use_camera=True,
+                use_camera=False,
                 use_lidar=True,
                 use_radar=False,
                 use_map=False,
@@ -101,7 +136,7 @@ class MyCustomDataset(Custom3DDataset):
         #     gt_names = set(info["gt_names"][mask])
         # else:
         #     gt_names = set(info["gt_names"])
-
+        # print("gt_names++++++++++++++++++++++++++++:  ",gt_names)
         cat_ids = []
         for name in gt_names:
             if name in self.CLASSES:
@@ -210,6 +245,8 @@ class MyCustomDataset(Custom3DDataset):
 
         gt_bboxes_3d = info["gt_boxes"]
         gt_names_3d = info["gt_names"]
+        # print("index:  ",info["frame_id"])
+        # print("gt_names_3d++++++++++++++++++++++++:  ",gt_names_3d)
         gt_labels_3d = []
         for cat in gt_names_3d:
             if cat in self.CLASSES:
@@ -217,7 +254,7 @@ class MyCustomDataset(Custom3DDataset):
             else:
                 gt_labels_3d.append(-1)
         gt_labels_3d = np.array(gt_labels_3d)
-        # print("gt_labels_3d:  ",gt_labels_3d)
+        # print("gt_labels_3d++++++++++++++++++++++++:  ",gt_labels_3d)
 
         # if self.with_velocity:
         #     gt_velocity = info["gt_velocity"][mask]
@@ -264,7 +301,7 @@ class MyCustomDataset(Custom3DDataset):
             gt_boxes_list = [[(0, 0, 0, 0, 0, 0, 0)] for i in range(len(self.CLASSES))]
             pred_boxes_list = [[(0, 0, 0, 0, 0, 0, 0)] for i in range(len(self.CLASSES))]
             for gt_box, gt_label in zip(frame_gt['gt_boxes'], frame_gt['gt_names']):
-                if str(gt_label) != 'masked_area':  # 过滤掉对象车道蒙板
+                if str(gt_label) != 'masked_area' and str(gt_label) in self.CLASSES:  # 过滤掉对象车道蒙板和不在类别列表中的对象
                     gt_label_idx = self.CLASSES.index(str(gt_label))
                     gt_boxes_list[gt_label_idx].append(gt_box)
 

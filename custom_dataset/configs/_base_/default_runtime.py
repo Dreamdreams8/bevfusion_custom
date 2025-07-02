@@ -11,8 +11,9 @@ log_config = dict(
 seed = 0
 deterministic = False
 # load_from = False
-load_from  =  '/home/bevfusion/output/lidar_result/epoch_24.pth'
-resume_from = False
+load_from  =  '/data/why/bevfusion/output/lidar_result/epoch_48.pth'
+# resume_from = False
+resume_from = '/data/why/bevfusion/output/lidar_result/epoch_48.pth'
 cudnn_benchmark = False
 distributed = False
 dist_params = dict(backend='nccl')

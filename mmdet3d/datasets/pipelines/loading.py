@@ -16,8 +16,7 @@ from mmdet.datasets.pipelines import LoadAnnotations
 import torch
 
 from .loading_utils import load_augmented_point_cloud, reduce_LiDAR_beams
-# add by why
-from torchvision import transforms  
+
 
 @PIPELINES.register_module()
 class LoadMultiViewImageFromFiles:
@@ -53,37 +52,27 @@ class LoadMultiViewImageFromFiles:
                 - scale_factor (float): Scale factor.
                 - img_norm_cfg (dict): Normalization configuration of images.
         """
-        # print("image_paths:  ",results)
         filename = results["image_paths"]
         # img is of shape (h, w, c, num_views)
         # modified for waymo
         images = []
         h, w = 0, 0
-        # # add by why  图像的维度是(C, H, W) 
-        # transform = transforms.ToTensor()       
-        # for name in filename:
-        #     # print("(Image.open(name))0++++++++++++++    ",(Image.open(name)).size)        
-        #     images.append(torch.from_numpy(transform(Image.open(name)).numpy().transpose((1, 2, 0))))   # change by why
-        #     # print("(Image.open(name))++++++++++++++    ",torch.from_numpy(transform(Image.open(name)).numpy().transpose((1, 2, 0))).shape)   
+        for name in filename:
+            images.append(Image.open(name))
         
-        for name in filename:    
-            images.append(Image.open(name))  
-
         #TODO: consider image padding in waymo
-        
 
         results["filename"] = filename
         # unravel to list, see `DefaultFormatBundle` in formating.py
         # which will transpose each image separately and then stack into array
-        results["img"] = images   
+        results["img"] = images
         # [1600, 900]
-        # if len(images) < 1:
-        #     return results        
         results["img_shape"] = images[0].size
         results["ori_shape"] = images[0].size
         # Set initial values for default meta_keys
         results["pad_shape"] = images[0].size
         results["scale_factor"] = 1.0
+        
         return results
 
     def __repr__(self):
@@ -194,12 +183,8 @@ class LoadPointsFromMultiSweeps:
                     cloud arrays.
         """
         points = results["points"]
-        # print("pointsshape++++++++++:  ",points.shape)
         points = points[:, self.use_dim]
-        # points = points[:, [0,1,2,4]]
-        # print("self.use_dim++++++++++:  ",self.use_dim)
-        # points.tensor[:, 4] = 0
-        # print("pointsshape22++++++++++:  ",points.shape)
+        points.tensor[:, 4] = 0
         sweep_points_list = [points]
         ts = results["timestamp"] / 1e6
         if self.pad_empty_sweeps and len(results["sweeps"]) == 0:
@@ -352,7 +337,7 @@ class LoadPointsFromFile:
     def __init__(
         self,
         coord_type,
-        load_dim=6,
+        load_dim=4,     # change by why
         use_dim=[0, 1, 2],
         shift_height=False,
         use_color=False,
@@ -411,11 +396,11 @@ class LoadPointsFromFile:
         """
         lidar_path = results["lidar_path"]
         points = self._load_points(lidar_path)
-        # print("self.load_dim:   ",self.load_dim)
-        # print("points:  ",points.shape)
-        points = points.reshape(-1, 4)
-
-        # points = points[:, self.use_dim]
+        points = points.reshape(-1, self.load_dim)
+        # TODO: make it more general
+        if self.reduce_beams and self.reduce_beams < 32:
+            points = reduce_LiDAR_beams(points, self.reduce_beams)
+        points = points[:, self.use_dim]
         attribute_dims = None
 
         if self.shift_height:

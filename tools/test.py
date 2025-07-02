@@ -17,10 +17,8 @@ from mmdet3d.models import build_model
 from mmdet.apis import multi_gpu_test, set_random_seed
 from mmdet.datasets import replace_ImageToTensor
 from mmdet3d.utils import recursive_eval
-import sys
-import os
-import time
-# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="MMDet test (and eval) a model")
     parser.add_argument("config", help="test config file path")
@@ -114,10 +112,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    # dist.init()
+    dist.init()
 
     torch.backends.cudnn.benchmark = True
-    # torch.cuda.set_device(dist.local_rank())
+    torch.cuda.set_device(dist.local_rank())
 
     assert args.out or args.eval or args.format_only or args.show or args.show_dir, (
         "Please specify at least one operation (save/eval/format/show the "
@@ -133,7 +131,7 @@ def main():
 
     configs.load(args.config, recursive=True)
     cfg = Config(recursive_eval(configs), filename=args.config)
-    # print(cfg)
+    print(cfg)
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
@@ -161,8 +159,8 @@ def main():
                 ds_cfg.pipeline = replace_ImageToTensor(ds_cfg.pipeline)
 
     # init distributed env first, since logger depends on the dist info.
-    distributed = False
-    # distributed = True
+    distributed = True
+
     # set random seeds
     if args.seed is not None:
         set_random_seed(args.seed, deterministic=args.deterministic)
@@ -193,13 +191,9 @@ def main():
     else:
         model.CLASSES = dataset.CLASSES
 
-
-
-    
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
-        outputs, input_data= single_gpu_test(model, data_loader)
-        # outputs = single_gpu_test(model, data_loader)
+        outputs = single_gpu_test(model, data_loader)
     else:
         model = MMDistributedDataParallel(
             model.cuda(),
@@ -207,8 +201,6 @@ def main():
             broadcast_buffers=False,
         )
         outputs = multi_gpu_test(model, data_loader, args.tmpdir, args.gpu_collect)
-
-
 
     rank, _ = get_dist_info()
     if rank == 0:
@@ -231,15 +223,8 @@ def main():
             ]:
                 eval_kwargs.pop(key, None)
             eval_kwargs.update(dict(metric=args.eval, **kwargs))
-            
-            input_data_files, tmp_dir = dataset.format_results(input_data, **kwargs)
-            # eval_kwargs.updata(dict())
-            
-            print(dataset.evaluate(outputs,input_data_files = input_data_files, **eval_kwargs))
-            # print(dataset.evaluate(outputs,**eval_kwargs))
-            tmp_dir.cleanup()
+            print(dataset.evaluate(outputs, **eval_kwargs))
+
 
 if __name__ == "__main__":
     main()
-
-

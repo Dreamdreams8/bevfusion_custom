@@ -158,7 +158,6 @@ class Custom3DDataset(Dataset):
             dict: Training data dict of the corresponding index.
         """
         input_dict = self.get_data_info(index)
-        # print("input_dict++++++++++++++++:",input_dict)
         if input_dict is None:
             return None
         self.pre_pipeline(input_dict)

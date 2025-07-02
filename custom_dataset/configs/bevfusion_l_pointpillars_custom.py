@@ -14,22 +14,19 @@ data_config = {
     'cams': ['cam_front', 'cam_left', 'cam_right']
 }
 
-root_path = '/home/bevfusion/'
-use_pretrained = False
-fuse_pretrained_path = root_path +  'output/lidar_result/latest.pth'
-
+root_path = '/data/why/bevfusion/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
-dataset_root = root_path + 'data/custom_data/'
+dataset_root = root_path + 'data/20240617-720/'
 
-gt_paste_stop_epoch = 15    # change by why
+gt_paste_stop_epoch = -1    # change by why
 reduce_beams = 32
 load_dim = 4
 use_dim = 4
 load_augmented = False
-max_epochs = 450         # change by why
+max_epochs = 24         # change by why
 
-point_cloud_range = [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+point_cloud_range = [-51.2, -51.2, -1.0, 51.2, 51.2, 7.0]
 voxel_size = [0.2, 0.2, 8]
 image_size = [256, 704]   # 370\1224
 
@@ -45,7 +42,7 @@ augment3d = {
 }
 
 object_classes = [
-    'car', 'truck'
+    'truck'
 ]
 
 model = dict(
@@ -80,6 +77,7 @@ model = dict(
                     type='PointPillarsScatter',
                     in_channels=64,
                     output_shape=[512, 512],
+                    sparse_shape=[512, 512, 1],
                 ),
             ),
         ),
@@ -94,7 +92,7 @@ model = dict(
             hidden_channel=128,
             num_classes=2,
             num_decoder_layers=1,
-            num_heads=8 ,   # 需要确定分别用于什么
+            num_heads=8 ,   
             nms_kernel_size=3,
             ffn_channel=256,
             dropout=0.1,
@@ -367,4 +365,4 @@ lr_config = dict(policy='cyclic')
 momentum_config = dict(policy='cyclic')
 
 runner = dict(type='CustomEpochBasedRunner', max_epochs=max_epochs)
-evaluation = dict(interval=24, pipeline=test_pipeline)
+evaluation = dict(interval=100, pipeline=test_pipeline)

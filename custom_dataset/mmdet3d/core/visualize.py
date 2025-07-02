@@ -16,13 +16,13 @@ __all__ = ["visualize_camera", "visualize_lidar", "visualize_map"]
 OBJECT_PALETTE = {
     "car": (255, 158, 0),
     "truck": (255, 99, 71),
-    "construction_vehicle": (233, 150, 70),
-    "bus": (255, 69, 0),
-    "trailer": (255, 140, 0),
-    "barrier": (112, 128, 144),
-    "motorcycle": (255, 61, 99),
-    "bicycle": (220, 20, 60),
-    "pedestrian": (0, 0, 230),
+    "lockstation": (233, 150, 70),
+    "pedestrian": (255, 69, 0),
+    "bridge": (255, 140, 0),
+    "lockbox": (112, 128, 144),
+    "forklift": (255, 61, 99),
+    "conetank": (220, 20, 60),
+    "excavator": (0, 0, 230),
     "traffic_cone": (47, 79, 79),
     "tricycle": (220, 20, 60),  # 相比原版 mmdet3d 的 visualize 增加 tricycle
     "cyclist": (220, 20, 60)  # 相比原版 mmdet3d 的 visualize 增加 cyclist
@@ -133,7 +133,7 @@ def visualize_lidar(
     ax.set_ylim(*ylim)
     ax.set_aspect(1)
     ax.set_axis_off()
-
+    
     if lidar is not None:
         plt.scatter(
             lidar[:, 0],
