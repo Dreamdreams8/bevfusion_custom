@@ -176,7 +176,7 @@ class MyCustomDataset(Custom3DDataset):
         lidar2ego[:3, 3] = info["lidar2ego_translation"]
         data["lidar2ego"] = lidar2ego
         # print("use_camera+++++++++++",self.modality["use_camera"])
-        self.modality["use_camera"] = True  # 单激光时也默认打开 # add by why
+        self.modality["use_camera"] = True  # 单激光时也默认打开 
         if self.modality["use_camera"]:
             data["image_paths"] = []
             data["lidar2camera"] = []
@@ -218,7 +218,7 @@ class MyCustomDataset(Custom3DDataset):
 
                 # camera to lidar transform
                 camera2lidar = np.eye(4).astype(np.float32)
-                # camera2lidar[:3, :3] = camera_info["camera_extrinsic_r"]   # del by why
+                # camera2lidar[:3, :3] = camera_info["camera_extrinsic_r"]   
                 camera2lidar[:3, 3] = camera_info["sensor2lidar_translation"]
                 data["camera2lidar"].append(camera2lidar)
 

@@ -777,7 +777,7 @@ class TransFusionHead(nn.Module):
                     ),
                     dict(num_class=1, class_names=["Cyclist"], indices=[2], radius=0.7),
                 ]
-            elif self.test_cfg["dataset"] == "MyCustomDataset":      # add by why
+            elif self.test_cfg["dataset"] == "MyCustomDataset":      # add by 
                 self.tasks = [
                     dict(num_class=1, class_names=["car"], indices=[0], radius=0.7),
                     dict(num_class=1, class_names=["truck"], indices=[1], radius=0.7),

@@ -14,17 +14,17 @@ data_config = {
     'cams': ['cam_front', 'cam_left', 'cam_right']
 }
 
-root_path = '/data/why/bevfusion/'
+root_path = '/home/bevfusion_custom/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
 dataset_root = root_path + 'data/20240617-720/'
 
-gt_paste_stop_epoch = -1    # change by why
+gt_paste_stop_epoch = -1    
 reduce_beams = 32
 load_dim = 4
 use_dim = 4
 load_augmented = False
-max_epochs = 24         # change by why
+max_epochs = 24         
 
 point_cloud_range = [-51.2, -51.2, -1.0, 51.2, 51.2, 7.0]
 voxel_size = [0.2, 0.2, 8]
@@ -157,9 +157,9 @@ model = dict(
             bbox_coder=dict(
                 type='TransFusionBBoxCoder',
                 pc_range=point_cloud_range[:2],
-                post_center_range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],     # change by why
+                post_center_range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],     
                 # post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-                score_threshold=0.05,      # change by why  0.1
+                score_threshold=0.05,      
                 out_size_factor=4,
                 voxel_size=voxel_size[:2],
                 code_size=8   
@@ -276,7 +276,7 @@ test_pipeline = [
         type='ImageAug3D',
         final_dim=image_size,
         # resize_lim=augment2d['resize'][1],
-        resize_lim=augment2d['resize'][0],               # change by why
+        resize_lim=augment2d['resize'][0],             
         bot_pct_lim=[0.0, 0.0],
         rot_lim=[0.0, 0.0],
         rand_flip=False,

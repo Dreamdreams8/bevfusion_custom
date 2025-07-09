@@ -93,5 +93,6 @@ class SECOND(BaseModule):
         outs = []
         for i in range(len(self.blocks)):
             x = self.blocks[i](x)
+            # print("++++++++++SECOND: ",x.shape)
             outs.append(x)
         return tuple(outs)

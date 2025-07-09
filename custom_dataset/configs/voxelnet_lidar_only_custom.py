@@ -7,10 +7,10 @@ custom_imports = dict(
     ],
     allow_failed_imports=False)
 
-root_path = '/home/bevfusion/'
+root_path = '/home/demo/bevfusion_custom/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
-dataset_root = root_path + 'data/custom_data/'
+dataset_root = root_path + 'data/20240617-720/'
 
 gt_paste_stop_epoch = 15
 reduce_beams = 32
@@ -21,7 +21,7 @@ max_epochs = 450
 
 # 使用与voxelnet_0p075.yaml相同的参数
 voxel_size = [0.075, 0.075, 0.2]
-point_cloud_range = [-54.0, -54.0, -5.0, 54.0, 54.0, 3.0]
+point_cloud_range = [-54.0, -54.0, -1.0, 54.0, 54.0, 7.0]
 
 augment2d = {
     'resize': [[0.38, 0.55], [0.48, 0.48]],
@@ -35,7 +35,7 @@ augment3d = {
 }
 
 object_classes = [
-    'car', 'truck'
+    'truck'
 ]
 
 model = dict(
@@ -51,7 +51,7 @@ model = dict(
             ),
             backbone=dict(
                 type='SparseEncoder',
-                in_channels=5,  # 4 + 1 (intensity + xyz + 1)
+                in_channels=4,  # 4 + 1 (intensity + xyz + 1)
                 sparse_shape=[1440, 1440, 41],  # 根据voxel_size和point_cloud_range计算
                 output_channels=128,
                 order=['conv', 'norm', 'act'],
@@ -79,7 +79,7 @@ model = dict(
             auxiliary=True,
             in_channels=384,
             hidden_channel=128,
-            num_classes=2,
+            num_classes=1,
             num_decoder_layers=1,
             num_heads=8,
             nms_kernel_size=3,
@@ -92,7 +92,7 @@ model = dict(
                 point_cloud_range=point_cloud_range,
                 grid_size=[1440, 1440, 41],  # 根据voxelnet_0p075.yaml设置
                 voxel_size=voxel_size,
-                out_size_factor=4,
+                out_size_factor=16,   # 这里跟输出的特征强相关，如最终输入transformer特征90，那就是16
                 gaussian_overlap=0.1,
                 min_radius=2,
                 pos_weight=-1,
@@ -124,7 +124,7 @@ model = dict(
                 point_cloud_range=point_cloud_range,
                 grid_size=[1440, 1440, 41],  # 根据voxelnet_0p075.yaml设置
                 voxel_size=voxel_size[:2],
-                out_size_factor=4,
+                out_size_factor=16,  # 这里跟输出的特征强相关，如最终输入transformer特征90，那就是16
                 pc_range=point_cloud_range[:2],
                 nms_type=['circle', 'rotate', 'rotate', 'circle', 'rotate', 'rotate'],
                 gaussian_overlap=0.1,
@@ -144,7 +144,7 @@ model = dict(
                 pc_range=point_cloud_range[:2],
                 post_center_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
                 score_threshold=0.05,
-                out_size_factor=4,
+                out_size_factor=16,  # 这里跟输出的特征强相关，如最终输入transformer特征90，那就是16
                 voxel_size=voxel_size[:2],
                 code_size=8
             ),
@@ -167,10 +167,10 @@ model = dict(
     decoder=dict(
         backbone=dict(
             type='SECOND',
-            in_channels=128,  # 与SparseEncoder的output_channels匹配
+            in_channels=256,  # 需要注意这里的维度要128*D，D为z轴最终特征维度
             out_channels=[128, 128, 256],
             layer_nums=[3, 5, 5],
-            layer_strides=[2, 2, 2],
+            layer_strides=[1, 2, 2],
         ),
         neck=dict(
             type='SECONDFPN',
@@ -250,8 +250,8 @@ input_modality = dict(
 )
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
+    samples_per_gpu=1,
+    workers_per_gpu=2,
     train=dict(
         type='CBGSDataset',
         dataset=dict(
