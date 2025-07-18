@@ -188,39 +188,38 @@ class MyCustomDataset(Custom3DDataset):
                 # print("camera_info:  ",camera_info["data_path"])
                 data["image_paths"].append(camera_info["data_path"])
 
-                # lidar to camera transform
-                # print("sensor2lidar_rotation",camera_info["sensor2lidar_rotation"])
-                lidar2camera_r = np.linalg.inv(camera_info["sensor2lidar_rotation"])
-                lidar2camera_t = (
-                    camera_info["sensor2lidar_translation"] @ lidar2camera_r.T
-                )
-                lidar2camera_rt = np.eye(4).astype(np.float32)
-                lidar2camera_rt[:3, :3] = lidar2camera_r.T
-                lidar2camera_rt[3, :3] = -lidar2camera_t
-                data["lidar2camera"].append(lidar2camera_rt.T)
-
                 # camera intrinsics
                 camera_intrinsics = np.eye(4).astype(np.float32)
                 camera_intrinsics[:3, :3] = camera_info["cam_intrinsic"]
                 data["camera_intrinsics"].append(camera_intrinsics)
 
+  
                 # lidar to image transform
-                lidar2image = camera_intrinsics @ lidar2camera_rt.T
-                data["lidar2image"].append(lidar2image)
+                ground2lidar = np.asarray([ [0, 1, 0, 0], 
+                                            [-1, 0, 0, 0],           
+                                            [0, 0, 1, 0],            
+                                            [0, 0, 0, 1]]) 
+
+                camera2ground_rt = np.eye(4).astype(np.float32)
+                # camera2ground_rt = np.eye(4).astype(np.float32)
+                camera2ground_rt[:3, :3] = camera_info["sensor2lidar_rotation"]
+                camera2ground_rt[:3, 3] = camera_info["sensor2lidar_translation"]
+                ground2camera_rt = np.linalg.inv(camera2ground_rt)
+                lidar2camera_rt = ground2camera_rt @ ground2lidar.T
+                # camera2lidar_rt = ground2lidar @ camera2ground_rt
+                # lidar2camera_rt = np.linalg.inv(camera2lidar_rt)                
+                lidar2image = camera_intrinsics @ lidar2camera_rt
+                data["lidar2image"].append(lidar2image.astype(np.float32))
+
+                # lidar to camera transform
+                data["lidar2camera"].append(lidar2camera_rt.astype(np.float32))
 
                 # camera to ego transform
-                camera2ego = np.eye(4).astype(np.float32)
-                camera2ego[:3, :3] = Quaternion(
-                    camera_info["sensor2ego_rotation"]
-                ).rotation_matrix
-                camera2ego[:3, 3] = camera_info["sensor2ego_translation"]
-                data["camera2ego"].append(camera2ego)
+                camera2lidar_rt = np.linalg.inv(lidar2camera_rt)
+                data["camera2ego"].append(camera2lidar_rt.astype(np.float32))
 
                 # camera to lidar transform
-                camera2lidar = np.eye(4).astype(np.float32)
-                # camera2lidar[:3, :3] = camera_info["camera_extrinsic_r"]   
-                camera2lidar[:3, 3] = camera_info["sensor2lidar_translation"]
-                data["camera2lidar"].append(camera2lidar)
+                data["camera2lidar"].append(camera2lidar_rt.astype(np.float32))
 
         annos = self.get_ann_info(index)
         data["ann_info"] = annos

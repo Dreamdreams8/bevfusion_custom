@@ -68,15 +68,20 @@ def create_custom_infos(
 def _fill_trainval_infos(root_path, train_scenes, val_scenes, test=False):
 
 
-    cam_intrinsic = np.array([612.915,0,1008.4,
-                                                            0,612.384,360.76,
-                                                            0,0,1]).reshape((3,3))
-    cam_front_extrinsic_r = np.array([0.787046,-0.615944,0.00518576,-0.03384])   # w,x,y,z
-    cam_front_extrinsic_t = np.array([-0.0298964,4.70937,0.89272])
-    cam_left_extrinsic_r = np.array([0.787046,-0.615944,0.00518576,-0.03384])   # w,x,y,z
-    cam_left_extrinsic_t = np.array([-0.0298964,4.70937,0.89272])
-    cam_right_extrinsic_r = np.array([0.787046,-0.615944,0.00518576,-0.03384])   # w,x,y,z
-    cam_right_extrinsic_t = np.array([-0.0298964,4.70937,0.89272])   
+    cam_intrinsic = np.array([625.30933437, 0.0, 961.13004221,
+                            0.0, 623.64759937, 546.09541553,
+                            0,0,1]).reshape((3,3))
+    cam_front_extrinsic_r = np.array([0.703439089347274, -0.7103943323318405, -0.020487775159276703, -0.009674256462361884])   # w,x,y,z
+    cam_front_extrinsic_t = np.array([-0.0, 5.1654, 0.891921])
+    # cam_front_extrinsic_r,cam_front_extrinsic_t = correct_camera_coord(cam_front_extrinsic_r,cam_front_extrinsic_t)
+
+    cam_left_extrinsic_r = np.array([0.3532152326674449,-0.3298521727440406,-0.6083741220437878,0.6295375057732218])   # w,x,y,z
+    cam_left_extrinsic_t = np.array([-1.3472,5.0299,1.51004])
+    # cam_left_extrinsic_r,cam_left_extrinsic_t = correct_camera_coord(cam_left_extrinsic_r,cam_left_extrinsic_t)
+
+    cam_right_extrinsic_r = np.array([-0.35289060105342246,0.3575524195433318,-0.6372609494402228,0.5843996691352665])   # w,x,y,z
+    cam_right_extrinsic_t = np.array([1.3472,5.0299,1.51004]) 
+    # cam_right_extrinsic_r,cam_right_extrinsic_t = correct_camera_coord(cam_right_extrinsic_r,cam_right_extrinsic_t) 
     cam_extrinsic_r = {}
     cam_extrinsic_t = {}
     cam_extrinsic_r ['cam_front'] = cam_front_extrinsic_r

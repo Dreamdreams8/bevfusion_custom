@@ -60,6 +60,9 @@ def visualize_camera(
     if bboxes is not None and len(bboxes) > 0:
         corners = bboxes.corners
         num_bboxes = corners.shape[0]
+        
+        # 这里相当于将地面点移到0，然后计算边界框的坐标
+        corners[:, :, 2] -= corners[:, :, 2].min(dim=1, keepdim=True).values
 
         coords = np.concatenate(
             [corners.reshape(-1, 3), np.ones((num_bboxes * 8, 1))], axis=-1
