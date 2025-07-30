@@ -14,7 +14,7 @@ data_config = {
     'cams': ['cam_front', 'cam_left', 'cam_right']
 }
 
-root_path = '/data/why/bevfusion/'
+root_path = '/data/bevfusion/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
 dataset_root = root_path + 'data/20240617-720/'

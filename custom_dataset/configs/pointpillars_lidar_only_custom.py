@@ -8,11 +8,11 @@ custom_imports = dict(
     ],
     allow_failed_imports=False)
 
-root_path = '/data/why/bevfusion/'
+root_path = '/home/demo/bevfusion_custom/'
 pretrained_path = root_path + 'pretrained/'
 dataset_type = 'MyCustomDataset'
-dataset_root = root_path + 'data/custom_0610_3class/'
-# dataset_root = root_path + 'data/20240617-720/'
+# dataset_root = root_path + 'data/custom_0610_3class/'
+dataset_root = root_path + 'data/20240617-720/'
 
 gt_paste_stop_epoch = 15
 reduce_beams = 32
@@ -36,7 +36,7 @@ augment3d = {
 }
 
 object_classes = [
-    'car','truck','lockstation'
+    'truck'
 ]
 
 model = dict(
@@ -83,7 +83,7 @@ model = dict(
             auxiliary=True,
             in_channels=384,
             hidden_channel=128,
-            num_classes=3,   # 类别修改处 change by why
+            num_classes=3,   # 类别修改处 
             num_decoder_layers=1,
             num_heads=8,
             nms_kernel_size=3,
@@ -255,8 +255,8 @@ input_modality = dict(
 )
 
 data = dict(
-    samples_per_gpu=10,
-    workers_per_gpu=12,
+    samples_per_gpu=1,
+    workers_per_gpu=2,
     train=dict(
         type='CBGSDataset',
         dataset=dict(

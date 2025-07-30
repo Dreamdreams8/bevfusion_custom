@@ -4,7 +4,6 @@ __pycache__
 *.pyc
 *.pyo
 *.pyd
-
 # C extensions
 *.so
 
@@ -16,7 +15,15 @@ build/
 *.manifest
 *.spec
 
+# 忽略所有 .so 扩展模块（尤其是编译生成的）
+*.cpython-*.so
+
+# 或者更具体地匹配路径（可选）：
+mmdet3d/ops/**/*.cpython-*.so
 
 
 # VS Code
 .vscode/
+
+output/
+.idea/

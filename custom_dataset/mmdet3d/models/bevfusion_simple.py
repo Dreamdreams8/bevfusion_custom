@@ -103,7 +103,7 @@ class BEVFusionSimple(BEVFusion):
     #             )
     #         elif sensor == "lidar":
     #             # feature = self.extract_lidar_features(points)
-    #             feature = self.extract_features(points,sensor)   # change by why
+    #             feature = self.extract_features(points,sensor)   
     #         else:
     #             raise ValueError(f"unsupported sensor: {sensor}")
     #         features.append(feature)
@@ -198,7 +198,7 @@ class BEVFusionSimple(BEVFusion):
                     lidar_aug_matrix,
                 )
             elif sensor == "lidar":
-                feature = self.extract_features(points, sensor)   # change by why
+                feature = self.extract_features(points, sensor)   # change by 
             else:
                 raise ValueError(f"unsupported sensor: {sensor}")
             features.append(feature)

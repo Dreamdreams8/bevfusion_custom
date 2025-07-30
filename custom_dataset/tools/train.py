@@ -18,6 +18,13 @@ from mmdet3d.utils import get_root_logger, convert_sync_batchnorm, recursive_eva
 
 from mmcv.runner import load_checkpoint   # add by why
 
+# import debugpy
+
+# debugpy.listen(5678)
+# print("Waiting for debugger to attach...")
+# debugpy.wait_for_client()
+# print("Debugger attached.")
+
 def main():
     dist.init()   # del by why
 
