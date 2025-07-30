@@ -49,7 +49,7 @@ class GTDepth:
         points = data['points'].data 
         img = data['img'].data
 
-        if self.keyframe_only:
+        if self.keyframe_only and points.shape[1] > 4:    # change by why
             points = points[points[:, 4] == 0]
 
         batch_size = len(points)
